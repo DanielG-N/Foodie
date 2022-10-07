@@ -10,7 +10,8 @@ urls = [f'https://www.allrecipes.com/search?q={searchTerm}',
 f'https://www.mybakingaddiction.com/?s={searchTerm}',
 f'https://sallysbakingaddiction.com/?s={searchTerm}',
 f'https://tastesbetterfromscratch.com/?s={searchTerm}',
-f'https://www.food.com/search/{searchTerm}']
+f'https://www.food.com/search/{searchTerm}',
+f'https://www.bonappetit.com/search?q={searchTerm}']
 
 class Recipe:
     def __init__(self, url, title, author, time, yeild, ingredients, instructions, image) -> None:
@@ -24,7 +25,7 @@ class Recipe:
         self.image = image
     
     def __str__(self):
-        return f"{self.url}\n{self.title}"
+        return f"{self.url}\n{self.title}\n{self.ingredients}\n{self.instructions}\n"
 
 def ScrapeSite(url):
     req = Request(url , headers={'User-Agent': 'Mozilla/5.0'})
@@ -35,8 +36,9 @@ def ScrapeSite(url):
 
     recipes = []
     soup = BeautifulSoup(page, 'html.parser')
+
     for search in set(soup.select(f'a[href*="{searchTerm}"]')):
-        #print(f"{url}  {search.get('href')}\n")
+        print(f"{url}  {search.get('href')}\n")
         recipe = search.get('href')
 
         try:
@@ -71,9 +73,12 @@ def ScrapeSite(url):
     return recipes
 
 if __name__ == '__main__':
+    # for url in urls:
+    #     ScrapeSite(url)
+    #     print('done')
     with Pool(processes=8) as pool, tqdm.tqdm(total=len(urls)) as pbar:
         recipes = []
-        for data in pool.imap_unordered(ScrapeSite, urls):                   # send urls from all_urls list to parse() function (it will be done concurently in process pool). The results returned will be unordered (returned when they are available, without waiting for other processes)
+        for data in pool.imap_unordered(ScrapeSite, urls):                 # send urls from all_urls list to parse() function (it will be done concurently in process pool). The results returned will be unordered (returned when they are available, without waiting for other processes)
             recipes.extend(data)                                           # update all_data list
             pbar.update() 
             # print(recipes)
