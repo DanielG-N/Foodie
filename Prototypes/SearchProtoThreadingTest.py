@@ -1,11 +1,12 @@
-from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from urllib.request import urlopen, Request
+from urllib.parse import urljoin
 from recipe_scrapers import scrape_me
 from datetime import date, timedelta
 from multiprocessing.dummy import Pool
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 import tqdm
 import time
 
@@ -41,44 +42,56 @@ def ScrapeSite(url):
     recipes = []
     soup = BeautifulSoup(page, 'html.parser')
 
-    for search in set(soup.select(f'a[href*="{searchTerm}"]')):
-        #print(f"{url}  {search.get('href')}\n")
-        recipe = search.get('href')
-        if recipe.startswith('/'):
-            recipe = urljoin(url, recipe)
-
-        try:
-            scraper = scrape_me(recipe)
-            # print(scraper.title())
-            # print(scraper.total_time())
-            # print(scraper.yields())
-            # print(scraper.ingredients())
-            # print(scraper.instructions_list())  # or alternatively for results as a Python list: scraper.instructions_list()
-            # print(scraper.image())
-            # scraper.host()
-            # scraper.links()
-            # scraper.nutrients()
-
-            # scrapedRecipe = Recipe(recipe, scraper.title, scraper.author, scraper.total_time, scraper.yields, 
-            #     scraper.ingredients, scraper.instructions_list, scraper.image)
-            # print(scrapedRecipe)
-
-            title = scraper.title()
-            author = scraper.author()
-            time = scraper.total_time()
-            yields = scraper.yields()
-            ingredients = scraper.ingredients()
-            instructions = scraper.instructions_list()
-            image = scraper.image()
-
-            scrapedRecipe = Recipe(recipe, title, author, time, yields, 
-                ingredients, instructions, image)
-            recipes.append(scrapedRecipe)
-        except:
-            continue
+    search = set(soup.select(f'a[href*="{searchTerm}"]'))
+    with ThreadPoolExecutor() as t:
+        futures = []
+        for recipe in search:
+            recipeUrl = recipe.get('href')
+            recipeUrl = urljoin(url, recipeUrl)
+            #print(f'{recipeUrl}\n')
+            futures.append(t.submit(ScrapeRecipe, recipeUrl))
+        for future in concurrent.futures.as_completed(futures):
+            #print(future.result())
+            if future.result():
+                recipes.append(future.result())
     return recipes
 
+def ScrapeRecipe(recipeUrl):
+    # print(recipeUrl)
+    # print(f"{url}  {search.get('href')}\n")
+    # recipe = search.get('href')
 
+    try:
+        scraper = scrape_me(recipeUrl)
+        # print(scraper.title())
+        # print(scraper.total_time())
+        # print(scraper.yields())
+        # print(scraper.ingredients())
+        # print(scraper.instructions_list())  # or alternatively for results as a Python list: scraper.instructions_list()
+        # print(scraper.image())
+        # scraper.host()
+        # scraper.links()
+        # scraper.nutrients()
+
+        # scrapedRecipe = Recipe(recipe, scraper.title, scraper.author, scraper.total_time, scraper.yields, 
+        #     scraper.ingredients, scraper.instructions_list, scraper.image)
+        # print(scrapedRecipe)
+
+        title = scraper.title()
+        author = scraper.author()
+        time = scraper.total_time()
+        yields = scraper.yields()
+        ingredients = scraper.ingredients()
+        instructions = scraper.instructions_list()
+        image = scraper.image()
+
+        scrapedRecipe = Recipe(recipeUrl, title, author, time, yields, 
+            ingredients, instructions, image)
+        #print('yo')
+        return scrapedRecipe
+    except:
+        #print(e.__class__)
+        return
 if __name__ == '__main__':
     # for url in urls:
     #     ScrapeSite(url)

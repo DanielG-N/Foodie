@@ -5,6 +5,10 @@ name = "pypi"
 
 [packages]
 flask = "*"
+recipe-scrapers = "*"
+beautifulsoup4 = "*"
+tqdm = "*"
+py-eureka-client = "*"
 
 [dev-packages]
 

@@ -1,2 +1,2 @@
 docker build -t scraper .
-docker run -d -p 5000:5000 --name scraper -d scraper
+docker run -d -p 5000:5000 --name scraper --net Foodie -d scraper
