@@ -48,7 +48,7 @@ def ScrapeSite(url):
         for recipe in search:
             recipeUrl = recipe.get('href')
             recipeUrl = urljoin(url, recipeUrl)
-            #print(f'{recipeUrl}\n')
+            print(f'{recipeUrl}\n')
             futures.append(t.submit(ScrapeRecipe, recipeUrl))
         for future in concurrent.futures.as_completed(futures):
             #print(future.result())
@@ -105,6 +105,6 @@ if __name__ == '__main__':
             # print(recipes)
     print(f'end: {time.time() - start}')
 
-    for recipe in recipes:
-        print(recipe)
+    # for recipe in recipes:
+    #     print(recipe)
 
