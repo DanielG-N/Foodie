@@ -1,3 +1,4 @@
+import mimetypes
 from flask import Flask
 from flask import Response
 from flask import jsonify
@@ -11,6 +12,7 @@ from recipe_scrapers import scrape_me
 from multiprocessing.dummy import Pool
 from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures
 import py_eureka_client.eureka_client as eureka_client
 import tqdm
 
@@ -32,24 +34,22 @@ def startScrape(search):
 
     searchTerm = search
     urls = getUrls(searchTerm)
-
     def generate():
-        with Pool(processes=cpu_count()*2) as pool:
+        with Pool(processes=cpu_count()*2) as pool, tqdm.tqdm(total=len(urls)) as pbar:
             recipes = []
-            for data in pool.imap_unordered(GetSites, urls):
-                recipes.extend(data)
-
-            pbar = tqdm.tqdm(total=len(recipes))
-
-            for recipe in pool.imap_unordered(ScrapeSite,recipes):
-                if recipe:
-                    yield json.dumps(recipe)
+            for data in pool.imap_unordered(ScrapeSite, urls):
+                for recipe in data:
+                    yield json.dumps(recipe)   # send urls from all_urls list to parse() function (it will be done concurently in process pool). The results returned will be unordered (returned when they are available, without waiting for other processes)
+                # recipes.extend(data)                                           # update all_data list
                 pbar.update() 
 
+    # for recipe in recipes:
+    #     print(recipe)
     return generate(), {"Content-Type":"text/event-stream"}
+    # return jsonify(recipes)
 
 
-def GetSites(url):
+def ScrapeSite(url):
     req = Request(url , headers={'User-Agent': 'Mozilla/5.0'})
     try:
         page = urlopen(req).read()
@@ -61,18 +61,26 @@ def GetSites(url):
 
     for search in set(soup.select(f'a[href*="{searchTerm}"]')):
         recipe = search.get('href')
-
         if recipe.startswith('/'):
             recipe = urljoin(url, recipe)
-
-        recipes.append(recipe)
         
-    return recipes
-    
-def ScrapeSite(url):
-    print(url)
-    try:
-            scraper = scrape_me(url)
+        print(recipe)
+
+        try:
+            scraper = scrape_me(recipe)
+            # print(scraper.title())
+            # print(scraper.total_time())
+            # print(scraper.yields())
+            # print(scraper.ingredients())
+            # print(scraper.instructions_list())  # or alternatively for results as a Python list: scraper.instructions_list()
+            # print(scraper.image())
+            # scraper.host()
+            # scraper.links()
+            # scraper.nutrients()
+
+            # scrapedRecipe = Recipe(recipe, scraper.title, scraper.author, scraper.total_time, scraper.yields, 
+            #     scraper.ingredients, scraper.instructions_list, scraper.image)
+            # print(scrapedRecipe)
 
             title = scraper.title()
             author = scraper.author()
@@ -82,19 +90,20 @@ def ScrapeSite(url):
             instructions = scraper.instructions_list()
             image = scraper.image()
 
-            scrapedRecipe = Recipe(url, title, author, time, yields, 
+            scrapedRecipe = Recipe(recipe, title, author, time, yields, 
                 ingredients, instructions, image)
-
-            return scrapedRecipe.Serialize()
-    except:
-        return
+            #recipes.append(scrapedRecipe)
+            yield scrapedRecipe.Serialize()
+        except:
+            continue
+    # return recipes
 
 def getUrls(searchTerm):
     urls = [f'https://www.allrecipes.com/search?q={searchTerm}',
     f'https://www.mybakingaddiction.com/?s={searchTerm}',
     f'https://sallysbakingaddiction.com/?s={searchTerm}',
     f'https://tastesbetterfromscratch.com/?s={searchTerm}',
-    f'https://www.foodnetwork.com/search/{searchTerm}',
+    f'https://www.food.com/search/{searchTerm}',
     f'https://www.bonappetit.com/search?q={searchTerm}']
 
     return urls
