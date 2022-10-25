@@ -41,7 +41,7 @@ def startScrape(search):
 
             pbar = tqdm.tqdm(total=len(recipes))
 
-            for recipe in pool.imap_unordered(ScrapeSite,recipes):
+            for recipe in pool.imap_unordered(ScrapeSite, recipes):
                 if recipe:
                     yield json.dumps(recipe)
                 pbar.update() 
@@ -56,7 +56,7 @@ def GetSites(url):
     except:
         return
 
-    recipes = []
+    recipes = set()
     soup = BeautifulSoup(page, 'html.parser')
 
     for search in set(soup.select(f'a[href*="{searchTerm}"]')):
@@ -65,10 +65,10 @@ def GetSites(url):
         if recipe.startswith('/'):
             recipe = urljoin(url, recipe)
 
-        recipes.append(recipe)
+        recipes.add(recipe)
         
     return recipes
-    
+
 def ScrapeSite(url):
     print(url)
     try:

@@ -1,4 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:foodie/recipe.dart';
+import 'package:http/http.dart' as http;
+import 'package:appinio_swiper/appinio_swiper.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,7 +30,8 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      // home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const TestWidget(),
     );
   }
 }
@@ -49,7 +56,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-
+  String body = "";
+  dynamic json;
   void _incrementCounter() {
     setState(() {
       // This call to setState tells the Flutter framework that something has
@@ -105,11 +113,200 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+class TestWidget extends StatefulWidget {
+  const TestWidget({super.key});
+
+  @override
+  State<TestWidget> createState() => _TestWidget();
+}
+
+class _TestWidget extends State<TestWidget> {
+  http.Client _client = http.Client();
+  List<Container> recipes = <Container>[];
+  int _selectedIndex = 1;
+  final searchText = TextEditingController();
+  StreamSubscription? searchResponse;
+
+  static List<Widget> pages = <Widget>[
+    Text(
+      'Index 1: Business',
+    ),
+  ];
+
+  _TestWidget() {
+    pages.addAll([
+      Container(
+          height: double.infinity,
+          width: double.infinity,
+          child: Column(children: [
+            TextField(
+              controller: searchText,
+              decoration: InputDecoration(
+                suffixIcon: IconButton(
+                    icon: Icon(Icons.search),
+                    onPressed: () {
+                      getRecipes(searchText.text);
+                    }),
+                suffixIconColor: Colors.white,
+                filled: true,
+                fillColor: Colors.white,
+                //contentPadding: EdgeInsets.only(top: 50),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none),
+                hintText: "Search recipes",
+              ),
+              onEditingComplete: () => getRecipes(searchText.text),
+            ),
+            Expanded(
+                child: FractionallySizedBox(
+              child: AppinioSwiper(
+                cards: recipes,
+              ),
+            ))
+          ])),
+      Text(
+        'Index 2: School',
+      ),
+    ]);
+    getRecipes("chicken");
+  }
+
+  void getRecipes(String searchTerm) async {
+    //_client = http.Client();
+    FocusManager.instance.primaryFocus?.unfocus();
+    if (searchResponse != null && !searchResponse!.isPaused) {
+      searchResponse!.cancel();
+    }
+
+    var request =
+        http.Request("GET", Uri.parse("http://10.0.2.2:9000/$searchTerm"));
+    //request.headers["Cache-Control"] = "no-cache";
+    //request.headers["Accept"] = "text/event-stream";
+
+    Future<http.StreamedResponse> response = _client.send(request);
+    print("Searching...");
+    searchResponse = response.asStream().listen((streamedResponse) {
+      print(
+          "Received streamedResponse.statusCode:${streamedResponse.statusCode}");
+      if (recipes.length >= 3) {
+        recipes.removeRange(0, recipes.length - 2);
+      }
+      try {
+        streamedResponse.stream.listen((data) {
+          //print("Received data:${utf8.decode(data)}");
+          Recipe recipe = Recipe.fromJson(jsonDecode((utf8.decode(data))));
+          int instructionsCount = 0;
+
+          recipes.insert(
+              0,
+              Container(
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white),
+                  child: ListView(
+                    //padding: const EdgeInsets.all(50),
+                    children: [
+                      //image
+                      Container(
+                        height: MediaQuery.of(context).size.height * .5,
+                        width: MediaQuery.of(context).size.width,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          image: DecorationImage(
+                              image: NetworkImage(recipe.image!),
+                              fit: BoxFit.cover),
+                        ),
+                      ),
+
+                      //title
+                      Container(
+                          margin: const EdgeInsets.all(10),
+                          alignment: Alignment.bottomLeft,
+                          child: Text(
+                            recipe?.title ?? "No title",
+                            style: const TextStyle(fontSize: 25),
+                          )),
+                      //author, time, yield
+                      Row(
+                        children: [
+                          Text(recipe?.author ?? "N/A"),
+                          Text(recipe?.time.toString() ?? "N/A"),
+                          Text(recipe?.yeild ?? "N/A")
+                        ],
+                      ),
+                      //ingredients
+                      Column(
+                        children: recipe.ingredients!.map((r) {
+                          return ListTile(title: Text(r));
+                        }).toList(),
+                      ),
+                      //instructions
+                      Column(
+                        children: recipe.instructions!.map((r) {
+                          instructionsCount++;
+                          return ListTile(
+                              title: Text('$instructionsCount. $r'));
+                        }).toList(),
+                      ),
+                    ],
+                  )));
+          print(recipes);
+          setState(() {});
+        });
+      } catch (e) {
+        print("Caught $e");
+      }
+    });
+  }
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (recipes.length == 0) {
+      return Center(child: CircularProgressIndicator());
+    } else {
+      return Scaffold(
+          backgroundColor: Colors.black,
+          body: SafeArea(child: Center(child: pages.elementAt(_selectedIndex))),
+          bottomNavigationBar: BottomNavigationBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(Icons.business),
+                label: 'Business',
+                backgroundColor: Colors.green,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home),
+                label: 'Home',
+                backgroundColor: Colors.red,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings),
+                label: 'Settings',
+                backgroundColor: Colors.pink,
+              ),
+            ],
+            currentIndex: _selectedIndex,
+            selectedItemColor: Colors.amber[800],
+            onTap: _onItemTapped,
+          ));
+    }
   }
 }
