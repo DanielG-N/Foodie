@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using static BCrypt.Net.BCrypt;
 
 namespace Controllers
 {
@@ -25,19 +26,20 @@ namespace Controllers
         [Route("addUser")]
         public async Task<IResult> AddUser(User user)
         {
+            user.Password = EnhancedHashPassword(user.Password);
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
-            Tokens token = GenerateToken(user.Id, user.username);
+            Tokens token = GenerateToken(user.Id, user.Username);
             return Results.Created($"/{user.Id}", token);
         }
 
         [HttpPost("login")]
         public async Task<ActionResult<Tokens>> Login(User login)
         {
-            var user = await _db.Users.Where(u => u.username == login.username && u.password == login.password).SingleOrDefaultAsync();
+            var user = await _db.Users.Where(u => u.Username == login.Username && EnhancedVerify(login.Password, u.Password, default)).SingleOrDefaultAsync();
 
             if(user != null){
-                return (GenerateToken(user.Id, user.username));
+                return (GenerateToken(user.Id, user.Username));
             }
 
             return Unauthorized();
@@ -87,9 +89,9 @@ namespace Controllers
             if(user2 == null)
                 return Results.NotFound();
             
-            user2.name = user1.name;
-            user2.username = user1.username;
-            user2.password = user1.password;
+            user2.Name = user1.Name;
+            user2.Username = user1.Username;
+            user2.Password = EnhancedHashPassword(user1.Password);
 
             await _db.SaveChangesAsync();
 
