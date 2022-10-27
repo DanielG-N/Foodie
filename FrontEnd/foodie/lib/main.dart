@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:foodie/recipe.dart';
 import 'package:http/http.dart' as http;
 import 'package:appinio_swiper/appinio_swiper.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 
 void main() {
   runApp(const MyApp());
@@ -171,6 +172,7 @@ class _TestWidget extends State<TestWidget> {
             Expanded(
                 child: FractionallySizedBox(
               child: AppinioSwiper(
+                onSwipe: swipe,
                 cards: recipes,
               ),
             ))
@@ -179,7 +181,28 @@ class _TestWidget extends State<TestWidget> {
         'Index 2: School',
       ),
     ]);
-    getRecipes("chicken");
+    fetchRecipes();
+    //getRecipes("chicken");
+  }
+
+  void swipe(int index, AppinioSwiperDirection direction) {
+    if (direction == AppinioSwiperDirection.right){
+      
+    }
+  }
+
+  void fetchRecipes() async {
+    final response =
+        await http.get(Uri.parse("http://10.0.2.2:9001/recipe/random"));
+
+    List<dynamic> recipeList = jsonDecode(response.body);
+
+    setState(() {
+      recipeList.forEach((recipe) {
+        recipes.add(createRecipeCard(Recipe.fromJson(recipe)));
+      });
+    });
+    //return List<Recipe>.from(json.decode(response.body).map((r) => Recipe.fromJson(r)));
   }
 
   void getRecipes(String searchTerm) async {
@@ -196,72 +219,21 @@ class _TestWidget extends State<TestWidget> {
 
     Future<http.StreamedResponse> response = _client.send(request);
     print("Searching...");
-    searchResponse = response.asStream().listen((streamedResponse) {
+    response.asStream().listen((streamedResponse) {
       print(
           "Received streamedResponse.statusCode:${streamedResponse.statusCode}");
+
       if (recipes.length >= 3) {
-        recipes.removeRange(0, recipes.length - 2);
+        //recipes.removeRange(0, recipes.length - 2);
+        recipes.clear();
       }
+
       try {
-        streamedResponse.stream.listen((data) {
+        searchResponse = streamedResponse.stream.listen((data) {
           //print("Received data:${utf8.decode(data)}");
           Recipe recipe = Recipe.fromJson(jsonDecode((utf8.decode(data))));
-          int instructionsCount = 0;
 
-          recipes.insert(
-              0,
-              Container(
-                  decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.white),
-                  child: ListView(
-                    //padding: const EdgeInsets.all(50),
-                    children: [
-                      //image
-                      Container(
-                        height: MediaQuery.of(context).size.height * .5,
-                        width: MediaQuery.of(context).size.width,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          image: DecorationImage(
-                              image: NetworkImage(recipe.image!),
-                              fit: BoxFit.cover),
-                        ),
-                      ),
-
-                      //title
-                      Container(
-                          margin: const EdgeInsets.all(10),
-                          alignment: Alignment.bottomLeft,
-                          child: Text(
-                            recipe?.title ?? "No title",
-                            style: const TextStyle(fontSize: 25),
-                          )),
-                      //author, time, yield
-                      Row(
-                        children: [
-                          Text(recipe?.author ?? "N/A"),
-                          Text(recipe?.time.toString() ?? "N/A"),
-                          Text(recipe?.yeild ?? "N/A")
-                        ],
-                      ),
-                      //ingredients
-                      Column(
-                        children: recipe.ingredients!.map((r) {
-                          return ListTile(title: Text(r));
-                        }).toList(),
-                      ),
-                      //instructions
-                      Column(
-                        children: recipe.instructions!.map((r) {
-                          instructionsCount++;
-                          return ListTile(
-                              title: Text('$instructionsCount. $r'));
-                        }).toList(),
-                      ),
-                    ],
-                  )));
+          recipes.insert(0, createRecipeCard(recipe));
           print(recipes);
           setState(() {});
         });
@@ -269,6 +241,130 @@ class _TestWidget extends State<TestWidget> {
         print("Caught $e");
       }
     });
+  }
+
+  Container createRecipeCard(Recipe recipe) {
+    int instructionsCount = 0;
+
+    return Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20), color: Colors.white),
+        child: ListView(
+          //padding: const EdgeInsets.all(50),
+          children: [
+            //image
+            Container(
+              height: MediaQuery.of(context).size.height * .5,
+              width: MediaQuery.of(context).size.width,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                image: DecorationImage(
+                    image: NetworkImage(recipe.image!), fit: BoxFit.cover),
+              ),
+            ),
+
+            //title
+            Container(
+                margin: const EdgeInsets.all(10),
+                alignment: Alignment.center,
+                child: AutoSizeText(
+                  recipe?.title ?? "No title",
+                  style: const TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'LobsterTwo'),
+                  maxLines: 1,
+                )),
+
+            //author, time, yield
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(children: [
+                  Icon(
+                    Icons.face,
+                    color: Colors.blue[300],
+                  ),
+                  Text(
+                    "By: ${recipe?.author ?? 'N/A'}",
+                    style: const TextStyle(
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                  ),
+                ]),
+                Column(children: [
+                  Icon(
+                    Icons.timer,
+                    color: Colors.red[700],
+                  ),
+                  Text(
+                    "Prep time: ${recipe?.time.toString() ?? 'N/A'}",
+                    style: const TextStyle(
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                  ),
+                ]),
+                Column(children: [
+                  Icon(
+                    Icons.restaurant,
+                    color: Colors.green[800],
+                  ),
+                  Text(
+                    recipe?.yeild ?? 'N/A',
+                    style: const TextStyle(
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                  ),
+                ])
+              ],
+            ),
+
+            Center(
+                child: Container(
+                    padding: const EdgeInsets.only(top: 10),
+                    margin: EdgeInsets.symmetric(vertical: 10),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                          bottom: BorderSide(
+                        width: 3,
+                      )),
+                    ),
+                    child: Text(
+                      "${recipe.ingredients!.length} Ingredients",
+                      style: const TextStyle(
+                          fontSize: 20, fontFamily: 'LobsterTwo'),
+                    ))),
+            //ingredients
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: recipe.ingredients!.map((r) {
+                return ListTile(
+                  style: ListTileStyle.list,
+                  visualDensity: VisualDensity(horizontal: 0, vertical: -4),
+                  title: Text(
+                    r,
+                    style: const TextStyle(
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                  ),
+                  leading: Icon(
+                    Icons.circle,
+                    color: Colors.grey[850],
+                    size: 10,
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
+                  minLeadingWidth: 0,
+                );
+              }).toList(),
+            ),
+            //instructions
+            Column(
+              children: recipe.instructions!.map((r) {
+                instructionsCount++;
+                return ListTile(title: Text('$instructionsCount. $r'));
+              }).toList(),
+            ),
+          ],
+        ));
   }
 
   void _onItemTapped(int index) {

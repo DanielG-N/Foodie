@@ -1,3 +1,6 @@
+from http import client
+from pydoc import cli
+from time import monotonic
 from flask import Flask
 from flask import Response
 from flask import jsonify
@@ -13,6 +16,8 @@ from multiprocessing import cpu_count
 from concurrent.futures import ThreadPoolExecutor
 import py_eureka_client.eureka_client as eureka_client
 import tqdm
+import pymongo
+from pymongo import MongoClient
 
 your_rest_server_port = 5000
 # The flowing code will register your server to eureka server and also start to send heartbeat every 30 seconds
@@ -22,6 +27,10 @@ eureka_client.init(eureka_server="http://eureka:8761/eureka/",
 
 app = Flask(__name__)
 searchTerm = ''
+
+client = MongoClient('mongodb+srv://MuteCoot:bgO0h2zvGhhsr7PH@foodie.oszd0t8.mongodb.net/?retryWrites=true&w=majority')
+db = client['Foodie']
+collection = db['Recipes']
 
 @app.route("/")
 def hello_world():
@@ -35,16 +44,23 @@ def startScrape(search):
 
     def generate():
         with Pool(processes=cpu_count()*2) as pool:
-            recipes = []
+            recipeSites = []
             for data in pool.imap_unordered(GetSites, urls):
-                recipes.extend(data)
+                recipeSites.extend(data)
 
-            pbar = tqdm.tqdm(total=len(recipes))
+            pbar = tqdm.tqdm(total=len(recipeSites))
 
-            for recipe in pool.imap_unordered(ScrapeSite, recipes):
+            recipes = []
+            for recipe in pool.imap_unordered(ScrapeSite, recipeSites):
                 if recipe:
+                    recipes.append(recipe)
                     yield json.dumps(recipe)
                 pbar.update() 
+            try:
+                collection.insert_many(recipes, False)
+            except:
+                print("duplicate url")
+
 
     return generate(), {"Content-Type":"text/event-stream"}
 

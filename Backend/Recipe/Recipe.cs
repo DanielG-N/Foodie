@@ -9,9 +9,9 @@ public class Recipe
     public List<string> Tags { get; set; } = null!;
     public string Url {get; set;} = null!;
     public string Title { get; set; } = null!;
-    public string Author { get; set; } = null!;
-    public int Time { get; set; }
-    public string Yeild { get; set; } = null!;
+    public string? Author { get; set; } = null!;
+    public int? Time { get; set; }
+    public string? Yeild { get; set; } = null!;
     public List<string> Ingredients { get; set; } = null!;
     public List<string> Instructions { get; set; } = null!;
     public string Image { get; set; } = null!;

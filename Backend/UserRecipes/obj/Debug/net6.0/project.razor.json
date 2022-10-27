@@ -1,5 +1,5 @@
 {
-  "FilePath": "c:\\Users\\dgonzalez\\OneDrive - Neumont College of Computer Science\\Documents\\School\\Third Year\\Fall 2022\\Capstone\\Foodie\\Backend\\User\\User.csproj",
+  "FilePath": "c:\\Users\\dgonzalez\\OneDrive - Neumont College of Computer Science\\Documents\\School\\Third Year\\Fall 2022\\Capstone\\Foodie\\Backend\\UserRecipes\\UserRecipes.csproj",
   "Configuration": {
     "ConfigurationName": "MVC-3.0",
     "LanguageVersion": "6.0",
@@ -16295,7 +16295,7 @@
     ],
     "CSharpLanguageVersion": 1000
   },
-  "RootNamespace": "User",
+  "RootNamespace": "UserRecipes",
   "Documents": [],
   "SerializationFormat": "0.2"
 }

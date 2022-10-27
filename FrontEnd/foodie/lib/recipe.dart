@@ -18,14 +18,14 @@ class Recipe {
       this.image});
 
   Recipe.fromJson(Map<String, dynamic> json) {
-    url = json['Url'];
-    title = json['Title'];
-    author = json['Author'];
-    time = json['Time'];
-    yeild = json['Yeild'];
-    ingredients = json['Ingredients'].cast<String>();
-    instructions = json['Instructions'].cast<String>();
-    image = json['Image'];
+    url = json['url'];
+    title = json['title'];
+    author = json['author'];
+    time = json['time'];
+    yeild = json['yeild'];
+    ingredients = json['ingredients'].cast<String>();
+    instructions = json['instructions'].cast<String>();
+    image = json['image'];
   }
 
   Map<String, dynamic> toJson() {

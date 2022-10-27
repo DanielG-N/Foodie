@@ -11,14 +11,14 @@ class Recipe:
 
     def Serialize(self):
         return {
-        "Url" : self.url,
-        "Title" : self.title,
-        "Author" : self.author,
-        "Time" : self.time,
-        "Yeild" : self.yeild,
-        "Ingredients" : self.ingredients,
-        "Instructions" : self.instructions,
-        "Image" : self.image
+        "url" : self.url,
+        "title" : self.title,
+        "author" : self.author,
+        "time" : self.time,
+        "yeild" : self.yeild,
+        "ingredients" : self.ingredients,
+        "instructions" : self.instructions,
+        "image" : self.image
         }
     
     def __str__(self):

@@ -34,6 +34,7 @@ dependencies:
   requests: ^4.7.0
   http: ^0.13.5
   appinio_swiper: ^1.1.1
+  auto_size_text: ^3.0.0
 
 
 
@@ -91,5 +92,12 @@ flutter:
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
   #
+  fonts:
+    - family: LobsterTwo
+      fonts:
+        - asset: assets/fonts/LobsterTwo/LobsterTwo-Regular.ttf
+    - family: IndieFlower
+      fonts:
+        - asset: assets/fonts/IndieFlower/IndieFlower-Regular.ttf
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages

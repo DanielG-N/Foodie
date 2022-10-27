@@ -9,6 +9,7 @@ recipe-scrapers = "*"
 beautifulsoup4 = "*"
 tqdm = "*"
 py-eureka-client = "*"
+pymongo = "*"
 
 [dev-packages]
 
