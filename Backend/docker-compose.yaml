@@ -20,18 +20,18 @@ services:
 #     depends_on:
 #       - eureka.c
 
-  # userDB.c:
-  #   container_name: userDB.c
-  #   build:
-  #     context: ./User/Db/
-  #     dockerfile: db.dockerfile
-  #   #image: sqlserver.c:1
-  #   # the old way when I wasn't using a dockerfile
-  #   #image: mcr.microsoft.com/mssql/server:2019-latest
-  #   ports:
-  #     - "1435:1433"
-  #   networks:
-  #     - Foodie.1 
+  userdb.c:
+    container_name: userdb.c
+    build:
+      context: ./User/Db/
+      dockerfile: db.dockerfile
+    #image: sqlserver.c:1
+    # the old way when I wasn't using a dockerfile
+    #image: mcr.microsoft.com/mssql/server:2019-latest
+    ports:
+      - "1435:1433"
+    networks:
+      - Foodie.1 
 
   eureka:
     container_name: eureka
@@ -41,18 +41,18 @@ services:
     networks:
       - Foodie.1
   
-  # user.1.c:
-  #   container_name: user.1.c
-  #   build:
-  #     context: ./User/
-  #     dockerfile: user.dockerfile
-  #   image: user.1.c:1
-  #   ports:
-  #     - "9005:80"
-  #   networks:
-  #     - Foodie.1
-  #   depends_on:
-  #     - eureka
+  user.1.c:
+    container_name: user.1.c
+    build:
+      context: ./User/
+      dockerfile: user.dockerfile
+    image: user.1.c:1
+    ports:
+      - "9005:80"
+    networks:
+      - Foodie.1
+    depends_on:
+      - eureka
 
   # user.2.c:
   #   container_name: user.2.c
@@ -102,6 +102,19 @@ services:
     image: recipe.2.c:1
     ports:
       - "9002:80"
+    networks:
+      - Foodie.1
+    depends_on:
+      - eureka
+
+  userrecipes.1.c:
+    container_name: userrecipes.1.c
+    build:
+      context: ./UserRecipes/
+      dockerfile: userrecipes.dockerfile
+    image: userrecipes.1.c:1
+    ports:
+      - "9003:80"
     networks:
       - Foodie.1
     depends_on:

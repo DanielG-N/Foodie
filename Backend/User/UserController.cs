@@ -23,7 +23,7 @@ namespace Controllers
         }
 
         [HttpPost]
-        [Route("addUser")]
+        [Route("")]
         public async Task<IResult> AddUser(User user)
         {
             user.Password = EnhancedHashPassword(user.Password);
@@ -89,7 +89,7 @@ namespace Controllers
             if(user2 == null)
                 return Results.NotFound();
             
-            user2.Name = user1.Name;
+            user2.Email = user1.Email;
             user2.Username = user1.Username;
             user2.Password = EnhancedHashPassword(user1.Password);
 

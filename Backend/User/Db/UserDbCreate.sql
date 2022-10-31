@@ -6,7 +6,7 @@ GO
 
 CREATE TABLE Users(
 	Id int NOT NULL PRIMARY KEY IDENTITY(1,1),
-	name varchar(255),
+	email varchar(255),
 	username varchar(255),
 	password varchar(255)
 )

@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:foodie/recipe.dart';
+import 'package:foodie/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:auto_size_text/auto_size_text.dart';
@@ -134,18 +136,22 @@ class TestWidget extends StatefulWidget {
 class _TestWidget extends State<TestWidget> {
   http.Client _client = http.Client();
   List<Container> recipes = <Container>[];
+  List<String> recipeUrls = <String>[];
   int _selectedIndex = 1;
   final searchText = TextEditingController();
   StreamSubscription? searchResponse;
+  late GlobalKey<FormState> formKey;
+  bool isAuthenticated = false;
 
   static List<Widget> pages = <Widget>[
-    Text(
-      'Index 1: Business',
-    ),
+    // Text(
+    //   'Index 1: Business',
+    // ),
   ];
 
   _TestWidget() {
     pages.addAll([
+      RecipePage(),
       Container(
           height: double.infinity,
           width: double.infinity,
@@ -172,6 +178,7 @@ class _TestWidget extends State<TestWidget> {
             Expanded(
                 child: FractionallySizedBox(
               child: AppinioSwiper(
+                unlimitedUnswipe: true,
                 onSwipe: swipe,
                 cards: recipes,
               ),
@@ -185,28 +192,222 @@ class _TestWidget extends State<TestWidget> {
     //getRecipes("chicken");
   }
 
-  void swipe(int index, AppinioSwiperDirection direction) {
-    if (direction == AppinioSwiperDirection.right){
-      
+  Widget RecipePage() {
+    return isAuthenticated ? SavedRecipes() : LoginOrSignupPage();
+  }
+
+  Widget LoginOrSignupPage() {
+    return Container(
+        child: Center(
+      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              pages[0] = LoginOrSignup(true);
+            });
+          },
+          child: const Text("Login"),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+        ),
+        const Text(
+          "Or",
+          style: TextStyle(color: Colors.white),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            setState(() {
+              pages[0] = LoginOrSignup(false);
+            });
+          },
+          child: const Text(
+            "Sign Up",
+            style: TextStyle(color: Colors.black),
+          ),
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+        ),
+      ]),
+    ));
+  }
+
+  Widget SavedRecipes() {
+    return Container();
+  }
+
+  Widget LoginOrSignup(bool login) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    String username;
+    String password;
+    User user = User();
+
+    formKey = GlobalKey<FormState>();
+    if (login) {
+      return Form(
+          key: formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextFormField(
+                decoration: const InputDecoration(
+                  hintText: "Username",
+                  filled: true,
+                  fillColor: Colors.white,
+                ),
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return "Please enter a username";
+                  }
+                },
+                onSaved: (newValue) => user.Username = newValue,
+              ),
+              TextFormField(
+                obscureText: true,
+                decoration: const InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  labelStyle: TextStyle(backgroundColor: Colors.white),
+                  hintText: "Password",
+                ),
+                validator: (value) {
+                  if (value!.isEmpty) {
+                    return "Please enter your password";
+                  }
+                },
+                onSaved: (newValue) => user.Password = newValue,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final form = formKey.currentState!;
+                    if (form.validate()) {
+                      form.save();
+
+                      final request = await http.post(
+                          Uri.parse("http://10.0.2.2:9005/user/login"),
+                          headers: <String, String>{
+                            'Content-Type': 'application/json'
+                          },
+                          body: jsonEncode(user.toJson()));
+
+                      print(request.statusCode);
+                    }
+                  setState(() {
+                    //////////////////////////////////////////
+                    pages[0] = RecipePage();
+                    }
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+                child: const Text(
+                  "Login",
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
+          ));
     }
+
+    return Form(
+        key: formKey,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextFormField(
+              decoration: const InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                labelStyle: TextStyle(backgroundColor: Colors.white),
+                hintText: "Email",
+              ),
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return "Please enter an email";
+                }
+              },
+              onSaved: (newValue) => user.Email = newValue,
+            ),
+            TextFormField(
+              decoration: const InputDecoration(
+                hintText: "Username",
+                filled: true,
+                fillColor: Colors.white,
+              ),
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return "Please enter a username";
+                }
+              },
+              onSaved: (newValue) => user.Username = newValue,
+            ),
+            TextFormField(
+              obscureText: true,
+              decoration: const InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                labelStyle: TextStyle(backgroundColor: Colors.white),
+                hintText: "Password",
+              ),
+              validator: (value) {
+                if (value!.isEmpty) {
+                  return "Please enter your password";
+                }
+              },
+              onSaved: (newValue) => user.Password = newValue,
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final form = formKey.currentState!;
+                if (form.validate()) {
+                  form.save();
+
+                  final request = await http.post(
+                      Uri.parse("http://10.0.2.2:9005/user/"),
+                      headers: <String, String>{
+                        'Content-Type': 'application/json'
+                      },
+                      body: jsonEncode(user.toJson()));
+
+                  print(request.statusCode);
+                }
+                setState(() {
+                  /////////////////////////// Do stuff
+                  pages[0] = RecipePage();
+                });
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
+              child: const Text(
+                "Login",
+                style: TextStyle(color: Colors.black),
+              ),
+            ),
+          ],
+        ));
+  }
+
+  void swipe(int index, AppinioSwiperDirection direction) async {
+    if (direction == AppinioSwiperDirection.right) {
+      final response = await http.put(
+          Uri.parse("http://10.0.2.2:9003/userrecipes/random"),
+          headers: <String, String>{'Content-Type': 'application/json'},
+          body: jsonEncode(recipeUrls[index]));
+    }
+    recipeUrls.removeLast();
   }
 
   void fetchRecipes() async {
     final response =
         await http.get(Uri.parse("http://10.0.2.2:9001/recipe/random"));
-
+    print(response.body);
     List<dynamic> recipeList = jsonDecode(response.body);
 
     setState(() {
       recipeList.forEach((recipe) {
-        recipes.add(createRecipeCard(Recipe.fromJson(recipe)));
+        recipe = Recipe.fromJson(recipe);
+        recipes.add(createRecipeCard(recipe));
+        recipeUrls.add(recipe.url);
       });
     });
-    //return List<Recipe>.from(json.decode(response.body).map((r) => Recipe.fromJson(r)));
   }
 
   void getRecipes(String searchTerm) async {
-    //_client = http.Client();
     FocusManager.instance.primaryFocus?.unfocus();
     if (searchResponse != null && !searchResponse!.isPaused) {
       searchResponse!.cancel();
@@ -230,10 +431,10 @@ class _TestWidget extends State<TestWidget> {
 
       try {
         searchResponse = streamedResponse.stream.listen((data) {
-          //print("Received data:${utf8.decode(data)}");
           Recipe recipe = Recipe.fromJson(jsonDecode((utf8.decode(data))));
-
           recipes.insert(0, createRecipeCard(recipe));
+          recipeUrls.insert(0, recipe.url!);
+
           print(recipes);
           setState(() {});
         });
@@ -250,7 +451,6 @@ class _TestWidget extends State<TestWidget> {
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20), color: Colors.white),
         child: ListView(
-          //padding: const EdgeInsets.all(50),
           children: [
             //image
             Container(
@@ -356,6 +556,7 @@ class _TestWidget extends State<TestWidget> {
                 );
               }).toList(),
             ),
+
             //instructions
             Column(
               children: recipe.instructions!.map((r) {
@@ -375,8 +576,8 @@ class _TestWidget extends State<TestWidget> {
 
   @override
   Widget build(BuildContext context) {
-    if (recipes.length == 0) {
-      return Center(child: CircularProgressIndicator());
+    if (recipes.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
     } else {
       return Scaffold(
           backgroundColor: Colors.black,
@@ -384,8 +585,8 @@ class _TestWidget extends State<TestWidget> {
           bottomNavigationBar: BottomNavigationBar(
             items: const <BottomNavigationBarItem>[
               BottomNavigationBarItem(
-                icon: Icon(Icons.business),
-                label: 'Business',
+                icon: Icon(Icons.restaurant_menu),
+                label: 'Recipes',
                 backgroundColor: Colors.green,
               ),
               BottomNavigationBarItem(
