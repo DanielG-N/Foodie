@@ -36,10 +36,11 @@ namespace Controllers
         [HttpPost("login")]
         public async Task<ActionResult<Tokens>> Login(User login)
         {
-            var user = await _db.Users.Where(u => u.Username == login.Username && EnhancedVerify(login.Password, u.Password, default)).SingleOrDefaultAsync();
+            var user = await _db.Users.Where(u => u.Username == login.Username).SingleOrDefaultAsync();
 
             if(user != null){
-                return (GenerateToken(user.Id, user.Username));
+                if(EnhancedVerify(login.Password, user.Password))
+                    return (GenerateToken(user.Id, user.Username));
             }
 
             return Unauthorized();

@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:foodie/recipe.dart';
 import 'package:foodie/user.dart';
 import 'package:http/http.dart' as http;
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:auto_size_text/auto_size_text.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -141,6 +140,7 @@ class _TestWidget extends State<TestWidget> {
   final searchText = TextEditingController();
   StreamSubscription? searchResponse;
   late GlobalKey<FormState> formKey;
+  final storage = FlutterSecureStorage();
   bool isAuthenticated = false;
 
   static List<Widget> pages = <Widget>[
@@ -230,7 +230,12 @@ class _TestWidget extends State<TestWidget> {
   }
 
   Widget SavedRecipes() {
-    return Container();
+    return Container(
+      child: Text(
+        "Logged in",
+        style: TextStyle(color: Colors.white),
+      ),
+    );
   }
 
   Widget LoginOrSignup(bool login) {
@@ -277,23 +282,28 @@ class _TestWidget extends State<TestWidget> {
               ElevatedButton(
                 onPressed: () async {
                   final form = formKey.currentState!;
-                    if (form.validate()) {
-                      form.save();
+                  if (form.validate()) {
+                    form.save();
 
-                      final request = await http.post(
-                          Uri.parse("http://10.0.2.2:9005/user/login"),
-                          headers: <String, String>{
-                            'Content-Type': 'application/json'
-                          },
-                          body: jsonEncode(user.toJson()));
+                    final request = await http.post(
+                        Uri.parse("http://10.0.2.2:9005/user/login"),
+                        headers: <String, String>{
+                          'Content-Type': 'application/json'
+                        },
+                        body: jsonEncode(user.toJson()));
 
-                      print(request.statusCode);
+                    if (request.statusCode == 200) {
+                      Map<String, dynamic> data = jsonDecode(request.body);
+
+                      await storage.write(key: "jwt", value: data['token']);
+                      await storage.write(key: "username", value: data['username']);
+                      isAuthenticated = true;
                     }
+                  }
                   setState(() {
                     //////////////////////////////////////////
                     pages[0] = RecipePage();
-                    }
-                  );
+                  });
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                 child: const Text(
@@ -347,11 +357,26 @@ class _TestWidget extends State<TestWidget> {
               ),
               validator: (value) {
                 if (value!.isEmpty) {
-                  return "Please enter your password";
+                  return "Please enter a password";
                 }
               },
               onSaved: (newValue) => user.Password = newValue,
             ),
+            // TextFormField(
+            //   obscureText: true,
+            //   decoration: const InputDecoration(
+            //     filled: true,
+            //     fillColor: Colors.white,
+            //     labelStyle: TextStyle(backgroundColor: Colors.white),
+            //     hintText: "Confirm Password",
+            //   ),
+            //   validator: (value) {
+            //     if (value!.isEmpty || value != user.Password) {
+            //       return "Passwords must match";
+            //     }
+            //   },
+            //   onSaved: (newValue) => user.Password = newValue,
+            // ),
             ElevatedButton(
               onPressed: () async {
                 final form = formKey.currentState!;
@@ -365,7 +390,13 @@ class _TestWidget extends State<TestWidget> {
                       },
                       body: jsonEncode(user.toJson()));
 
-                  print(request.statusCode);
+                  if (request.statusCode == 200) {
+                    Map<String, dynamic> data = jsonDecode(request.body);
+
+                    await storage.write(key: "jwt", value: data['token']);
+                    await storage.write(key: "username", value: data['username']);
+                    isAuthenticated = true;
+                  }
                 }
                 setState(() {
                   /////////////////////////// Do stuff
@@ -374,7 +405,7 @@ class _TestWidget extends State<TestWidget> {
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
               child: const Text(
-                "Login",
+                "Sign Up",
                 style: TextStyle(color: Colors.black),
               ),
             ),

@@ -35,6 +35,7 @@ dependencies:
   http: ^0.13.5
   appinio_swiper: ^1.1.1
   auto_size_text: ^3.0.0
+  flutter_secure_storage: ^6.0.0
 
 
 
