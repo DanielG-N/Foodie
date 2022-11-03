@@ -26,4 +26,10 @@ public class UserRecipesController : ControllerBase
         await _userRecipesDB.UpdateOneAsync(u => u.Username == username, update, new UpdateOptions{IsUpsert = true}, default);
         return Results.NoContent();
     }
+
+    [HttpGet("{username}")]
+    public async Task<ActionResult<List<string>>> GetSavedRecipes(string username){
+        UserRecipes savedRecipes = await _userRecipesDB.Find(ur => ur.Username == username).FirstOrDefaultAsync();
+        return savedRecipes.SavedRecipes;
+    }
 }

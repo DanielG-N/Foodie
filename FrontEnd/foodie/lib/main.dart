@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:appinio_swiper/appinio_swiper.dart';
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:animations/animations.dart';
 
 void main() {
   runApp(const MyApp());
@@ -193,7 +194,7 @@ class _TestWidget extends State<TestWidget> {
   }
 
   Widget RecipePage() {
-    return isAuthenticated ? SavedRecipes() : LoginOrSignupPage();
+    return isAuthenticated ? SavedRecipesPage() : LoginOrSignupPage();
   }
 
   Widget LoginOrSignupPage() {
@@ -206,8 +207,8 @@ class _TestWidget extends State<TestWidget> {
               pages[0] = LoginOrSignup(true);
             });
           },
-          child: const Text("Login"),
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+          child: const Text("Login"),
         ),
         const Text(
           "Or",
@@ -219,29 +220,133 @@ class _TestWidget extends State<TestWidget> {
               pages[0] = LoginOrSignup(false);
             });
           },
+          style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
           child: const Text(
             "Sign Up",
             style: TextStyle(color: Colors.black),
           ),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
         ),
       ]),
     ));
   }
 
-  Widget SavedRecipes() {
-    return Container(
-      child: Text(
-        "Logged in",
-        style: TextStyle(color: Colors.white),
-      ),
+  Future<List<Recipe>?> getSavedRecipes() async {
+    final username = await storage.read(key: "username");
+    print(username);
+    var response =
+        await http.get(Uri.parse("http://10.0.2.2:9003/userrecipes/$username"));
+    print(response.body);
+
+    if (response.body.isNotEmpty) {
+      final List<dynamic> urls = jsonDecode(response.body);
+
+      response = await http.post(
+          Uri.parse("http://10.0.2.2:9001/recipe/savedRecipes"),
+          headers: <String, String>{'Content-Type': 'application/json'},
+          body: jsonEncode(urls));
+
+      List<Recipe> recipeList = (jsonDecode(response.body) as List)
+          .map((e) => Recipe.fromJson(e))
+          .toList();
+
+      return recipeList;
+    } else {
+      return null;
+    }
+
+    // recipeList.forEach((recipe) {
+    //   recipe = Recipe.fromJson(recipe);
+    // });
+  }
+
+  Widget SavedRecipesPage() {
+    return FutureBuilder(
+      future: getSavedRecipes(),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Container(
+              child: CustomScrollView(
+            primary: false,
+            slivers: <Widget>[
+              SliverPadding(
+                padding: const EdgeInsets.all(20),
+                sliver: SliverGrid.count(
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  crossAxisCount: 2,
+                  children: <Widget>[
+                    for (var recipe in snapshot.data!)
+                      createSavedRecipesCard(recipe)
+                  ],
+                ),
+              ),
+            ],
+          ));
+        } else {
+          return Container();
+        }
+      },
     );
+  }
+
+  Card createSavedRecipeClosedCard(Recipe recipe) {
+    return Card(
+      child: Column(children: [
+        Container(
+          height: MediaQuery.of(context).size.height * .2,
+          width: MediaQuery.of(context).size.width,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(5),
+            image: DecorationImage(
+                image: NetworkImage(recipe.image!), fit: BoxFit.cover),
+          ),
+        ),
+        Container(
+            margin: const EdgeInsets.only(top: 4),
+            alignment: Alignment.center,
+            child: AutoSizeText(
+              recipe?.title ?? "No title",
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'LobsterTwo'),
+              maxLines: 1,
+            )),
+      ]),
+    );
+  }
+
+  OpenContainer createSavedRecipesCard(Recipe recipe) {
+    return OpenContainer(
+      closedBuilder: (context, closedContainer) {
+        return createSavedRecipeClosedCard(recipe);
+      },
+      openBuilder: (context, openContainer) {
+        return createRecipeCard(recipe);
+      },
+      closedColor: randomColor(),
+    );
+  }
+
+  Color randomColor() {
+    var colorList = [
+      Colors.red.shade300,
+      Colors.blue.shade300,
+      Colors.green.shade300,
+      Colors.yellow.shade300,
+      Colors.purple.shade400,
+      Colors.pink.shade300,
+      Colors.orange.shade300,
+      Colors.teal.shade300
+    ];
+
+    return (colorList..shuffle()).first;
   }
 
   Widget LoginOrSignup(bool login) {
     FocusManager.instance.primaryFocus?.unfocus();
-    String username;
-    String password;
     User user = User();
 
     formKey = GlobalKey<FormState>();
@@ -296,7 +401,8 @@ class _TestWidget extends State<TestWidget> {
                       Map<String, dynamic> data = jsonDecode(request.body);
 
                       await storage.write(key: "jwt", value: data['token']);
-                      await storage.write(key: "username", value: data['username']);
+                      await storage.write(
+                          key: "username", value: data['username']);
                       isAuthenticated = true;
                     }
                   }
@@ -328,7 +434,7 @@ class _TestWidget extends State<TestWidget> {
                 hintText: "Email",
               ),
               validator: (value) {
-                if (value!.isEmpty) {
+                if (value == null || value.isEmpty) {
                   return "Please enter an email";
                 }
               },
@@ -356,6 +462,7 @@ class _TestWidget extends State<TestWidget> {
                 hintText: "Password",
               ),
               validator: (value) {
+                user.Password = value;
                 if (value!.isEmpty) {
                   return "Please enter a password";
                 }
@@ -394,7 +501,8 @@ class _TestWidget extends State<TestWidget> {
                     Map<String, dynamic> data = jsonDecode(request.body);
 
                     await storage.write(key: "jwt", value: data['token']);
-                    await storage.write(key: "username", value: data['username']);
+                    await storage.write(
+                        key: "username", value: data['username']);
                     isAuthenticated = true;
                   }
                 }
@@ -415,10 +523,40 @@ class _TestWidget extends State<TestWidget> {
 
   void swipe(int index, AppinioSwiperDirection direction) async {
     if (direction == AppinioSwiperDirection.right) {
-      final response = await http.put(
-          Uri.parse("http://10.0.2.2:9003/userrecipes/random"),
-          headers: <String, String>{'Content-Type': 'application/json'},
-          body: jsonEncode(recipeUrls[index]));
+      if (isAuthenticated) {
+        String? username = await storage.read(key: 'username');
+        final response = await http.put(
+            Uri.parse("http://10.0.2.2:9003/userrecipes/$username"),
+            headers: <String, String>{'Content-Type': 'application/json'},
+            body: jsonEncode(recipeUrls[index]));
+        pages[0] = SavedRecipesPage();
+      } else {
+        showDialog(
+            context: context,
+            builder: (BuildContext context) => SimpleDialog(
+                  title: Text("Want to save a recipe?"),
+                  children: [
+                    TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          setState(() {
+                            pages[0] = LoginOrSignup(true);
+                            _selectedIndex = 0;
+                          });
+                        },
+                        child: Text("Login")),
+                    TextButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          setState(() {
+                            LoginOrSignup(false);
+                            _selectedIndex = 0;
+                          });
+                        },
+                        child: Text("Sign Up"))
+                  ],
+                ));
+      }
     }
     recipeUrls.removeLast();
   }

@@ -24,10 +24,10 @@ public class RecipeController : ControllerBase
         return Results.Created($"/{recipe.Id}", recipe);
     }
 
-    [HttpGet("savedRecipes")]
-    public async Task<ActionResult<List<Recipe>>> GetRecipesFromList(List<string> ids)
+    [HttpPost("savedRecipes")]
+    public async Task<ActionResult<List<Recipe>>> GetRecipesFromList(List<string> urls)
     {
-        return await _recipeDB.Find(Builders<Recipe>.Filter.In(r => r.Id, ids)).ToListAsync();
+        return await _recipeDB.Find(Builders<Recipe>.Filter.In(r => r.Url, urls)).ToListAsync();
     }
 
     [HttpGet("random")]
