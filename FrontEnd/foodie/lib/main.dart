@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:foodie/addRecipePage.dart';
 import 'package:foodie/recipe.dart';
 import 'package:foodie/user.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +21,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Foodie',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -143,14 +144,16 @@ class _TestWidget extends State<TestWidget> {
   late GlobalKey<FormState> formKey;
   final storage = FlutterSecureStorage();
   bool isAuthenticated = false;
-
-  static List<Widget> pages = <Widget>[
-    // Text(
-    //   'Index 1: Business',
-    // ),
-  ];
+  static List<Widget> pages = <Widget>[];
 
   _TestWidget() {
+    init();
+    fetchRecipes();
+  }
+
+  void init() async {
+    isAuthenticated = await checkAuth();
+
     pages.addAll([
       RecipePage(),
       Container(
@@ -185,12 +188,23 @@ class _TestWidget extends State<TestWidget> {
               ),
             ))
           ])),
-      Text(
-        'Index 2: School',
-      ),
+      const AddRecipePage()
     ]);
-    fetchRecipes();
-    //getRecipes("chicken");
+  }
+
+  Future<bool> checkAuth() async {
+    var token = await storage.read(key: "jwt");
+    final response = await http.get(
+        Uri.parse("http://10.0.2.2:9005/user/checkAuth"),
+        headers: <String, String>{
+          'Authorization': 'Bearer $token',
+        });
+    print(response.statusCode);
+    if (response.statusCode == 401) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   Widget RecipePage() {

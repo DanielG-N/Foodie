@@ -100,6 +100,13 @@ namespace Controllers
 
         }
 
+        [Authorize]
+        [HttpGet]
+        [Route("checkAuth")]
+        public async Task<IResult> checkAuth(){
+            return Results.NoContent();
+        }
+
         public Tokens GenerateToken(int id, string username){
             // Else we generate JSON Web Token
             var tokenHandler = new JwtSecurityTokenHandler();
