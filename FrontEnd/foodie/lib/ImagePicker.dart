@@ -17,6 +17,9 @@ const Color kLightGray = Color(0xFFF1F0F5);
 enum PhotoSource { FILE, NETWORK }
 
 class ImagePickerWidget extends StatefulWidget {
+  final Function setImage;
+  ImagePickerWidget(this.setImage);
+
   @override
   _ImagePickerWidgetState createState() => _ImagePickerWidgetState();
 }
@@ -33,8 +36,9 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       return _buildAddPhoto();
     }
     return InkWell(
+      onTap: () => _onAddPhotoClicked(context),
       child: Image.file(File(_photos!.path)),
-      );
+    );
     // return Scaffold(
     //   body: Column(
     //     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -186,6 +190,7 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
         setState(() {
           _photos = image;
           _photoSource = PhotoSource.FILE;
+          widget.setImage(image);
         });
       }
     }

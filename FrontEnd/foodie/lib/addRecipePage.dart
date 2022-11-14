@@ -5,6 +5,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'package:minio/minio.dart';
+import 'package:minio/io.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
@@ -19,6 +22,7 @@ class _AddRecipePage extends State<AddRecipePage> {
   int ingredientsIndex = 4;
   int instructionsIndex = 8;
   List<Widget> formWidgets = [];
+  XFile? image;
 
   _AddRecipePage() {
     formWidgets.addAll([
@@ -151,25 +155,27 @@ class _AddRecipePage extends State<AddRecipePage> {
             instructionsIndex++;
           },
           child: const Icon(Icons.add_circle_outline_rounded)),
-      ImagePickerWidget(),
+      ImagePickerWidget(setImage),
       ElevatedButton(
         onPressed: () async {
-          final form = formKey.currentState!;
-          if (form.validate()) {
-            form.save();
+          var url = await uploadImage();
+          print(url);
+          // final form = formKey.currentState!;
+          // if (form.validate()) {
+          //   form.save();
 
-            final request = await http.post(
-                Uri.parse("http://10.0.2.2:9005/user/login"),
-                headers: <String, String>{'Content-Type': 'application/json'},
-                body: jsonEncode(recipe.toJson()));
+          //   final request = await http.post(
+          //       Uri.parse("http://10.0.2.2:9005/user/login"),
+          //       headers: <String, String>{'Content-Type': 'application/json'},
+          //       body: jsonEncode(recipe.toJson()));
 
-            if (request.statusCode == 200) {
-              Map<String, dynamic> data = jsonDecode(request.body);
-            }
-          }
-          setState(() {
-            //////////////////////////////////////////
-          });
+          //   if (request.statusCode == 200) {
+          //     Map<String, dynamic> data = jsonDecode(request.body);
+          //   }
+          // }
+          // setState(() {
+          //   //////////////////////////////////////////
+          // });
         },
         style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
         child: const Text(
@@ -178,6 +184,25 @@ class _AddRecipePage extends State<AddRecipePage> {
         ),
       ),
     ]);
+  }
+
+  Future<String> uploadImage() async {
+    var minio = Minio(
+      endPoint: "s3.amazonaws.com",
+      accessKey: "AKIASGAQPIGDKLL3HDWA",
+      secretKey: "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",
+      region: "us-west-2"
+    );
+
+    var path = "images/${image!.name}";
+
+    await minio.fPutObject("fooodie", path, image!.path, {'x-amz-acl': 'public-read'});
+
+    return "https://fooodie.s3.us-west-2.amazonaws.com/$path";
+  }
+
+  void setImage(XFile image) {
+    this.image = image;
   }
 
   void addItem(Widget item, int index) {
@@ -190,6 +215,8 @@ class _AddRecipePage extends State<AddRecipePage> {
   Widget build(BuildContext context) {
     return Form(
         key: formKey,
-        child: ListView.builder(itemCount: formWidgets.length, itemBuilder: ((context, index) => formWidgets[index])));
+        child: ListView.builder(
+            itemCount: formWidgets.length,
+            itemBuilder: ((context, index) => formWidgets[index])));
   }
 }
