@@ -7,18 +7,18 @@ networks:
   Foodie.1:
     external: false
 services:
-#   apigateway.c:
-#     container_name: apigateway.c
-#     build:
-#       context: ./ApiGateway/
-#       dockerfile: 2.dockerfile
-#     image: apigateway.c:1    
-#     ports:
-#       - "8888:8888"
-#     networks:
-#       - Foodie.1
-#     depends_on:
-#       - eureka.c
+  apigateway.c:
+    container_name: apigateway.c
+    build:
+      context: ./ApiGateway/
+      dockerfile: 2.dockerfile
+    image: apigateway.c:1    
+    ports:
+      - "8888:8888"
+    networks:
+      - Foodie.1
+    depends_on:
+      - eureka
 
   userdb.c:
     container_name: userdb.c

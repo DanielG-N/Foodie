@@ -195,7 +195,7 @@ class _TestWidget extends State<TestWidget> {
   Future<bool> checkAuth() async {
     var token = await storage.read(key: "jwt");
     final response = await http.get(
-        Uri.parse("http://10.0.2.2:9005/user/checkAuth"),
+        Uri.parse("http://10.0.2.2:8888/user/checkAuth"),
         headers: <String, String>{
           'Authorization': 'Bearer $token',
         });
@@ -248,14 +248,14 @@ class _TestWidget extends State<TestWidget> {
     final username = await storage.read(key: "username");
     print(username);
     var response =
-        await http.get(Uri.parse("http://10.0.2.2:9003/userrecipes/$username"));
+        await http.get(Uri.parse("http://10.0.2.2:8888/userrecipes/$username"));
     print(response.body);
 
     if (response.body.isNotEmpty) {
       final List<dynamic> urls = jsonDecode(response.body);
 
       response = await http.post(
-          Uri.parse("http://10.0.2.2:9001/recipe/savedRecipes"),
+          Uri.parse("http://10.0.2.2:8888/recipe/savedRecipes"),
           headers: <String, String>{'Content-Type': 'application/json'},
           body: jsonEncode(urls));
 
@@ -405,7 +405,7 @@ class _TestWidget extends State<TestWidget> {
                     form.save();
 
                     final request = await http.post(
-                        Uri.parse("http://10.0.2.2:9005/user/login"),
+                        Uri.parse("http://10.0.2.2:8888/user/login"),
                         headers: <String, String>{
                           'Content-Type': 'application/json'
                         },
@@ -505,7 +505,7 @@ class _TestWidget extends State<TestWidget> {
                   form.save();
 
                   final request = await http.post(
-                      Uri.parse("http://10.0.2.2:9005/user/"),
+                      Uri.parse("http://10.0.2.2:8888/user/"),
                       headers: <String, String>{
                         'Content-Type': 'application/json'
                       },
@@ -540,7 +540,7 @@ class _TestWidget extends State<TestWidget> {
       if (isAuthenticated) {
         String? username = await storage.read(key: 'username');
         final response = await http.put(
-            Uri.parse("http://10.0.2.2:9003/userrecipes/$username"),
+            Uri.parse("http://10.0.2.2:8888/userrecipes/$username"),
             headers: <String, String>{'Content-Type': 'application/json'},
             body: jsonEncode(recipeUrls[index]));
         pages[0] = SavedRecipesPage();
@@ -577,7 +577,7 @@ class _TestWidget extends State<TestWidget> {
 
   void fetchRecipes() async {
     final response =
-        await http.get(Uri.parse("http://10.0.2.2:9001/recipe/random"));
+        await http.get(Uri.parse("http://10.0.2.2:8888/recipe/random"));
     print(response.body);
     List<dynamic> recipeList = jsonDecode(response.body);
 
@@ -597,7 +597,7 @@ class _TestWidget extends State<TestWidget> {
     }
 
     var request =
-        http.Request("GET", Uri.parse("http://10.0.2.2:9000/$searchTerm"));
+        http.Request("GET", Uri.parse("http://10.0.2.2:8888/scraper/$searchTerm"));
     //request.headers["Cache-Control"] = "no-cache";
     //request.headers["Accept"] = "text/event-stream";
 

@@ -159,24 +159,23 @@ class _AddRecipePage extends State<AddRecipePage> {
       ImagePickerWidget(setImage),
       ElevatedButton(
         onPressed: () async {
-          var url = await uploadImage();
-          print(url);
-          // final form = formKey.currentState!;
-          // if (form.validate()) {
-          //   form.save();
+          final form = formKey.currentState!;
+          if (form.validate()) {
+            form.save();
+            recipe.image = await uploadImage();
 
-          //   final request = await http.post(
-          //       Uri.parse("http://10.0.2.2:9005/user/login"),
-          //       headers: <String, String>{'Content-Type': 'application/json'},
-          //       body: jsonEncode(recipe.toJson()));
+            final request = await http.post(
+                Uri.parse("http://10.0.2.2:8888/recipe/"),
+                headers: <String, String>{'Content-Type': 'application/json'},
+                body: jsonEncode(recipe.toJson()));
 
-          //   if (request.statusCode == 200) {
-          //     Map<String, dynamic> data = jsonDecode(request.body);
-          //   }
-          // }
-          // setState(() {
-          //   //////////////////////////////////////////
-          // });
+            if (request.statusCode == 200) {
+              Map<String, dynamic> data = jsonDecode(request.body);
+            }
+          }
+          setState(() {
+            //////////////////////////////////////////
+          });
         },
         style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
         child: const Text(
