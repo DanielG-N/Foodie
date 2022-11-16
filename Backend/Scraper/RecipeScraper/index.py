@@ -53,6 +53,7 @@ def startScrape(search):
             recipes = []
             for recipe in pool.imap_unordered(ScrapeSite, recipeSites):
                 if recipe:
+                    # print(recipe)
                     recipes.append(recipe)
                     yield json.dumps(recipe)
                 pbar.update() 

@@ -596,8 +596,8 @@ class _TestWidget extends State<TestWidget> {
       searchResponse!.cancel();
     }
 
-    var request =
-        http.Request("GET", Uri.parse("http://10.0.2.2:8888/scraper/$searchTerm"));
+    var request = http.Request(
+        "GET", Uri.parse("http://10.0.2.2:8888/scraper/$searchTerm"));
     //request.headers["Cache-Control"] = "no-cache";
     //request.headers["Accept"] = "text/event-stream";
 
@@ -612,14 +612,21 @@ class _TestWidget extends State<TestWidget> {
         recipes.clear();
       }
 
+      String jsonString = '';
       try {
         searchResponse = streamedResponse.stream.listen((data) {
-          Recipe recipe = Recipe.fromJson(jsonDecode((utf8.decode(data))));
-          recipes.insert(0, createRecipeCard(recipe));
-          recipeUrls.insert(0, recipe.url!);
+          jsonString += utf8.decode(data);
+          print(jsonString);
 
-          print(recipes);
-          setState(() {});
+          if (jsonString.endsWith('}')) {
+            Recipe recipe = Recipe.fromJson(jsonDecode(jsonString));
+            recipes.insert(0, createRecipeCard(recipe));
+            recipeUrls.insert(0, recipe.url!);
+
+            //print(recipes);
+            jsonString = "";
+            setState(() {});
+          }
         });
       } catch (e) {
         print("Caught $e");
