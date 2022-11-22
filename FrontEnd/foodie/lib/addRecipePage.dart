@@ -3,7 +3,6 @@ import 'package:foodie/ImagePicker.dart';
 import 'package:foodie/recipe.dart';
 import 'package:foodie/s3access.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:minio/minio.dart';

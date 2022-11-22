@@ -135,6 +135,7 @@ class TestWidget extends StatefulWidget {
 }
 
 class _TestWidget extends State<TestWidget> {
+  final AppinioSwiperController swipeController = AppinioSwiperController();
   http.Client _client = http.Client();
   List<Container> recipes = <Container>[];
   List<String> recipeUrls = <String>[];
@@ -182,6 +183,7 @@ class _TestWidget extends State<TestWidget> {
             Expanded(
                 child: FractionallySizedBox(
               child: AppinioSwiper(
+                controller: swipeController,
                 unlimitedUnswipe: true,
                 onSwipe: swipe,
                 cards: recipes,
@@ -212,36 +214,95 @@ class _TestWidget extends State<TestWidget> {
   }
 
   Widget LoginOrSignupPage() {
-    return Container(
-        child: Center(
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              pages[0] = LoginOrSignup(true);
-            });
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-          child: const Text("Login"),
-        ),
-        const Text(
-          "Or",
-          style: TextStyle(color: Colors.white),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              pages[0] = LoginOrSignup(false);
-            });
-          },
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-          child: const Text(
-            "Sign Up",
-            style: TextStyle(color: Colors.black),
+    return FractionallySizedBox(
+        widthFactor: .8,
+        heightFactor: .8,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
           ),
-        ),
-      ]),
-    ));
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Image(
+              width: MediaQuery.of(context).size.width * .32,
+              height: MediaQuery.of(context).size.height * .12,
+              image: const AssetImage("assets/images/blackLogo.png"),
+            ),
+            const SizedBox(
+              height: 40,
+            ),
+            const Text(
+              "Want to save a recipe?",
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 24,
+                fontFamily: 'LobsterTwo',
+              ),
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  pages[0] = LoginOrSignup(true);
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightBlue.shade400,
+                  fixedSize: Size(MediaQuery.of(context).size.width * .3,
+                      MediaQuery.of(context).size.width * .1)),
+              child: const Text(
+                "Login",
+                style: TextStyle(
+                  fontSize: 16,
+                  //fontFamily: "IndieFlower",
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            const Text(
+              "Or",
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 16,
+                fontFamily: 'LobsterTwo',
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  pages[0] = LoginOrSignup(false);
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  fixedSize: Size(MediaQuery.of(context).size.width * .3,
+                      MediaQuery.of(context).size.width * .1)),
+              child: const Text(
+                "Sign Up",
+                style: TextStyle(color: Colors.black, fontSize: 16),
+              ),
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            Container(
+              width: MediaQuery.of(context).size.width * .1,
+              decoration: const BoxDecoration(
+                  border: Border(
+                      bottom: BorderSide(
+                width: 3,
+                color: Colors.black,
+              ))),
+            )
+          ]),
+        ));
   }
 
   Future<List<Recipe>?> getSavedRecipes() async {
@@ -367,72 +428,161 @@ class _TestWidget extends State<TestWidget> {
     if (login) {
       return Form(
           key: formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                decoration: const InputDecoration(
-                  hintText: "Username",
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return "Please enter a username";
-                  }
-                },
-                onSaved: (newValue) => user.Username = newValue,
+          child: Container(
+              width: MediaQuery.of(context).size.width * .9,
+              height: MediaQuery.of(context).size.height * .75,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
               ),
-              TextFormField(
-                obscureText: true,
-                decoration: const InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  labelStyle: TextStyle(backgroundColor: Colors.white),
-                  hintText: "Password",
-                ),
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return "Please enter your password";
-                  }
-                },
-                onSaved: (newValue) => user.Password = newValue,
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  final form = formKey.currentState!;
-                  if (form.validate()) {
-                    form.save();
-
-                    final request = await http.post(
-                        Uri.parse("http://10.0.2.2:8888/user/login"),
-                        headers: <String, String>{
-                          'Content-Type': 'application/json'
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Align(
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                          margin: const EdgeInsets.only(left: 10),
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.black54),
+                              shape: BoxShape.circle),
+                          child: IconButton(
+                              padding: EdgeInsets.zero,
+                              alignment: Alignment.center,
+                              onPressed: () {
+                                setState(() {
+                                  pages[0] = LoginOrSignupPage();
+                                });
+                              },
+                              icon: const Icon(Icons.arrow_back_rounded)))),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  Image(
+                    width: MediaQuery.of(context).size.width * .32,
+                    height: MediaQuery.of(context).size.height * .12,
+                    image: const AssetImage("assets/images/blackLogo.png"),
+                  ),
+                  const SizedBox(
+                    height: 40,
+                  ),
+                  FractionallySizedBox(
+                      widthFactor: .8,
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          hintText: "Username",
+                          filled: true,
+                          fillColor: Colors.white,
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: Colors.blue.shade400,
+                              )),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide:
+                                  const BorderSide(color: Colors.black54)),
+                        ),
+                        textAlign: TextAlign.center,
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return "Please enter a username";
+                          }
                         },
-                        body: jsonEncode(user.toJson()));
+                        onSaved: (newValue) => user.Username = newValue,
+                      )),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  FractionallySizedBox(
+                      widthFactor: .8,
+                      child: TextFormField(
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: "Password",
+                          filled: true,
+                          fillColor: Colors.white,
+                          focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: BorderSide(
+                                color: Colors.blue.shade400,
+                              )),
+                          enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.black54,
+                              )),
+                        ),
+                        textAlign: TextAlign.center,
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return "Please enter your password";
+                          }
+                        },
+                        onSaved: (newValue) => user.Password = newValue,
+                      )),
+                  const SizedBox(
+                    height: 40,
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      final form = formKey.currentState!;
+                      if (form.validate()) {
+                        form.save();
 
-                    if (request.statusCode == 200) {
-                      Map<String, dynamic> data = jsonDecode(request.body);
+                        final request = await http.post(
+                            Uri.parse("http://10.0.2.2:8888/user/login"),
+                            headers: <String, String>{
+                              'Content-Type': 'application/json'
+                            },
+                            body: jsonEncode(user.toJson()));
 
-                      await storage.write(key: "jwt", value: data['token']);
-                      await storage.write(
-                          key: "username", value: data['username']);
-                      isAuthenticated = true;
-                    }
-                  }
-                  setState(() {
-                    //////////////////////////////////////////
-                    pages[0] = RecipePage();
-                  });
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                child: const Text(
-                  "Login",
-                  style: TextStyle(color: Colors.black),
-                ),
-              ),
-            ],
-          ));
+                        if (request.statusCode == 200) {
+                          Map<String, dynamic> data = jsonDecode(request.body);
+
+                          await storage.write(key: "jwt", value: data['token']);
+                          await storage.write(
+                              key: "username", value: data['username']);
+                          isAuthenticated = true;
+
+                          setState(() {
+                            pages[0] = RecipePage();
+                          });
+                        } else {
+                          ////////// incorrect username/password
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.lightBlue.shade400,
+                      fixedSize: Size(MediaQuery.of(context).size.width * .3,
+                        MediaQuery.of(context).size.height * .05),
+                      //elevation: 2,
+                    ),
+                    child: const Text(
+                      "Login",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        //fontFamily: "LobsterTwo",
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width * .1,
+                    decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(
+                          width: 3,
+                          color: Colors.black,
+                        )
+                      )
+                    ),
+                  )
+                ],
+              )));
     }
 
     return Form(
@@ -545,12 +695,18 @@ class _TestWidget extends State<TestWidget> {
             body: jsonEncode(recipeUrls[index]));
         pages[0] = SavedRecipesPage();
       } else {
+        swipeController.unswipe();
         showDialog(
             context: context,
             builder: (BuildContext context) => SimpleDialog(
-                  title: Text("Want to save a recipe?"),
+                  title: const Center(
+                      child: Text(
+                    "Want to save a recipe?",
+                    style: TextStyle(fontFamily: "LobsterTwo"),
+                  )),
                   children: [
                     TextButton(
+                        //style: TextButton.styleFrom(backgroundColor: Colors.black),
                         onPressed: () {
                           Navigator.pop(context);
                           setState(() {
@@ -563,13 +719,14 @@ class _TestWidget extends State<TestWidget> {
                         onPressed: () {
                           Navigator.pop(context);
                           setState(() {
-                            LoginOrSignup(false);
+                            pages[0] = LoginOrSignup(false);
                             _selectedIndex = 0;
                           });
                         },
                         child: Text("Sign Up"))
                   ],
                 ));
+        return;
       }
     }
     recipeUrls.removeLast();
@@ -720,7 +877,7 @@ class _TestWidget extends State<TestWidget> {
                     child: Text(
                       "${recipe.ingredients!.length} Ingredients",
                       style: const TextStyle(
-                          fontSize: 20, fontFamily: 'LobsterTwo'),
+                          fontSize: 25, fontFamily: 'LobsterTwo'),
                     ))),
             //ingredients
             Column(
@@ -733,7 +890,9 @@ class _TestWidget extends State<TestWidget> {
                   title: Text(
                     r,
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                        fontFamily: 'IndieFlower',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 20),
                   ),
                   leading: Icon(
                     Icons.circle,
@@ -747,11 +906,44 @@ class _TestWidget extends State<TestWidget> {
               }).toList(),
             ),
 
+            Center(
+                child: Container(
+                    padding: const EdgeInsets.only(top: 10),
+                    margin: EdgeInsets.symmetric(vertical: 10),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                          bottom: BorderSide(
+                        width: 3,
+                      )),
+                    ),
+                    child: const Text(
+                      "Instructions",
+                      style: TextStyle(fontSize: 25, fontFamily: 'LobsterTwo'),
+                    ))),
             //instructions
             Column(
               children: recipe.instructions!.map((r) {
                 instructionsCount++;
-                return ListTile(title: Text('$instructionsCount. $r'));
+                return ListTile(
+                  title: RichText(
+                    text: TextSpan(children: [
+                      TextSpan(
+                          text: "$instructionsCount. ",
+                          style: const TextStyle(
+                              color: Colors.black,
+                              fontFamily: 'IndieFlower',
+                              fontWeight: FontWeight.w800,
+                              fontSize: 22)),
+                      TextSpan(
+                          text: r,
+                          style: const TextStyle(
+                              color: Colors.black,
+                              fontFamily: 'IndieFlower',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20)),
+                    ]),
+                  ),
+                );
               }).toList(),
             ),
           ],
@@ -770,6 +962,7 @@ class _TestWidget extends State<TestWidget> {
       return const Center(child: CircularProgressIndicator());
     } else {
       return Scaffold(
+          resizeToAvoidBottomInset: false,
           backgroundColor: Colors.black,
           body: SafeArea(child: Center(child: pages.elementAt(_selectedIndex))),
           bottomNavigationBar: BottomNavigationBar(
