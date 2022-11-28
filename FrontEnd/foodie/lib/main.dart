@@ -35,106 +35,19 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       // home: const MyHomePage(title: 'Flutter Demo Home Page'),
-      home: const TestWidget(),
+      home: const HomeWidget(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class HomeWidget extends StatefulWidget {
+  const HomeWidget({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<HomeWidget> createState() => _HomeWidget();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  String body = "";
-  dynamic json;
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
-  }
-}
-
-class TestWidget extends StatefulWidget {
-  const TestWidget({super.key});
-
-  @override
-  State<TestWidget> createState() => _TestWidget();
-}
-
-class _TestWidget extends State<TestWidget> {
+class _HomeWidget extends State<HomeWidget> {
   final AppinioSwiperController swipeController = AppinioSwiperController();
   http.Client _client = http.Client();
   List<Container> recipes = <Container>[];
@@ -143,11 +56,12 @@ class _TestWidget extends State<TestWidget> {
   final searchText = TextEditingController();
   StreamSubscription? searchResponse;
   late GlobalKey<FormState> formKey;
-  final storage = FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
   bool isAuthenticated = false;
   static List<Widget> pages = <Widget>[];
+  final errorText = TextEditingController();
 
-  _TestWidget() {
+  _HomeWidget() {
     init();
     fetchRecipes();
   }
@@ -181,14 +95,15 @@ class _TestWidget extends State<TestWidget> {
               onEditingComplete: () => getRecipes(searchText.text),
             ),
             Expanded(
-                child: FractionallySizedBox(
-              child: AppinioSwiper(
-                controller: swipeController,
-                unlimitedUnswipe: true,
-                onSwipe: swipe,
-                cards: recipes,
-              ),
-            ))
+              child: FractionallySizedBox(
+                child: AppinioSwiper(
+                  controller: swipeController,
+                  unlimitedUnswipe: true,
+                  onSwipe: swipe,
+                  cards: recipes,
+                ),
+              )
+            )
           ])),
       const AddRecipePage()
     ]);
@@ -328,10 +243,6 @@ class _TestWidget extends State<TestWidget> {
     } else {
       return null;
     }
-
-    // recipeList.forEach((recipe) {
-    //   recipe = Recipe.fromJson(recipe);
-    // });
   }
 
   Widget SavedRecipesPage() {
@@ -420,6 +331,7 @@ class _TestWidget extends State<TestWidget> {
     return (colorList..shuffle()).first;
   }
 
+  bool error = false;
   Widget LoginOrSignup(bool login) {
     FocusManager.instance.primaryFocus?.unfocus();
     User user = User();
@@ -481,6 +393,11 @@ class _TestWidget extends State<TestWidget> {
                               borderRadius: BorderRadius.circular(10),
                               borderSide:
                                   const BorderSide(color: Colors.black54)),
+                          errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                              )),
                         ),
                         textAlign: TextAlign.center,
                         validator: (value) {
@@ -511,17 +428,34 @@ class _TestWidget extends State<TestWidget> {
                               borderSide: const BorderSide(
                                 color: Colors.black54,
                               )),
+                          errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Colors.red,
+                              )),
                         ),
                         textAlign: TextAlign.center,
                         validator: (value) {
                           if (value!.isEmpty) {
-                            return "Please enter your password";
+                            return "Please enter a password";
                           }
                         },
                         onSaved: (newValue) => user.Password = newValue,
                       )),
                   const SizedBox(
-                    height: 40,
+                    height: 20,
+                  ),
+                  Visibility(
+                      maintainSize: error,
+                      maintainAnimation: error,
+                      maintainState: error,
+                      visible: error,
+                      child: const Text(
+                        "Incorrect username or password.",
+                        style: TextStyle(color: Colors.red, fontSize: 15),
+                      )),
+                  const SizedBox(
+                    height: 20,
                   ),
                   ElevatedButton(
                     onPressed: () async {
@@ -549,13 +483,18 @@ class _TestWidget extends State<TestWidget> {
                           });
                         } else {
                           ////////// incorrect username/password
+                          setState(() {
+                            error = true;
+                            //error == true ? error = false : error = true;
+                            pages[0] = LoginOrSignup(true);
+                          });
                         }
                       }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.lightBlue.shade400,
                       fixedSize: Size(MediaQuery.of(context).size.width * .3,
-                        MediaQuery.of(context).size.height * .05),
+                          MediaQuery.of(context).size.height * .05),
                       //elevation: 2,
                     ),
                     child: const Text(
@@ -574,12 +513,10 @@ class _TestWidget extends State<TestWidget> {
                     width: MediaQuery.of(context).size.width * .1,
                     decoration: const BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(
-                          width: 3,
-                          color: Colors.black,
-                        )
-                      )
-                    ),
+                            bottom: BorderSide(
+                      width: 3,
+                      color: Colors.black,
+                    ))),
                   )
                 ],
               )));
@@ -587,102 +524,223 @@ class _TestWidget extends State<TestWidget> {
 
     return Form(
         key: formKey,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextFormField(
-              decoration: const InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                labelStyle: TextStyle(backgroundColor: Colors.white),
-                hintText: "Email",
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return "Please enter an email";
-                }
-              },
-              onSaved: (newValue) => user.Email = newValue,
+        child: Container(
+            width: MediaQuery.of(context).size.width * .9,
+            height: MediaQuery.of(context).size.height * .8,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
             ),
-            TextFormField(
-              decoration: const InputDecoration(
-                hintText: "Username",
-                filled: true,
-                fillColor: Colors.white,
-              ),
-              validator: (value) {
-                if (value!.isEmpty) {
-                  return "Please enter a username";
-                }
-              },
-              onSaved: (newValue) => user.Username = newValue,
-            ),
-            TextFormField(
-              obscureText: true,
-              decoration: const InputDecoration(
-                filled: true,
-                fillColor: Colors.white,
-                labelStyle: TextStyle(backgroundColor: Colors.white),
-                hintText: "Password",
-              ),
-              validator: (value) {
-                user.Password = value;
-                if (value!.isEmpty) {
-                  return "Please enter a password";
-                }
-              },
-              onSaved: (newValue) => user.Password = newValue,
-            ),
-            // TextFormField(
-            //   obscureText: true,
-            //   decoration: const InputDecoration(
-            //     filled: true,
-            //     fillColor: Colors.white,
-            //     labelStyle: TextStyle(backgroundColor: Colors.white),
-            //     hintText: "Confirm Password",
-            //   ),
-            //   validator: (value) {
-            //     if (value!.isEmpty || value != user.Password) {
-            //       return "Passwords must match";
-            //     }
-            //   },
-            //   onSaved: (newValue) => user.Password = newValue,
-            // ),
-            ElevatedButton(
-              onPressed: () async {
-                final form = formKey.currentState!;
-                if (form.validate()) {
-                  form.save();
-
-                  final request = await http.post(
-                      Uri.parse("http://10.0.2.2:8888/user/"),
-                      headers: <String, String>{
-                        'Content-Type': 'application/json'
+            child: ListView(
+              //padding: const EdgeInsets.only(left: 20, right: 20),
+              //mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(
+                  height: 10,
+                ),
+                Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                        margin: const EdgeInsets.only(left: 10),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.black54),
+                            shape: BoxShape.circle),
+                        child: IconButton(
+                            padding: EdgeInsets.zero,
+                            alignment: Alignment.center,
+                            onPressed: () {
+                              setState(() {
+                                pages[0] = LoginOrSignupPage();
+                              });
+                            },
+                            icon: const Icon(Icons.arrow_back_rounded)))),
+                const SizedBox(
+                  height: 10,
+                ),
+                Image(
+                  width: MediaQuery.of(context).size.width * .32,
+                  height: MediaQuery.of(context).size.height * .12,
+                  image: const AssetImage("assets/images/blackLogo.png"),
+                ),
+                const SizedBox(
+                  height: 30,
+                ),
+                FractionallySizedBox(
+                    widthFactor: .8,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                        hintText: "Email",
+                        filled: true,
+                        fillColor: Colors.white,
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Colors.blue.shade400,
+                            )),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.black54)),
+                        errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            )),
+                      ),
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please enter an Email";
+                        }
                       },
-                      body: jsonEncode(user.toJson()));
+                      onSaved: (newValue) => user.Email = newValue,
+                    )),
+                const SizedBox(
+                  height: 20,
+                ),
+                FractionallySizedBox(
+                    widthFactor: .8,
+                    child: TextFormField(
+                      decoration: InputDecoration(
+                        hintText: "Username",
+                        filled: true,
+                        fillColor: Colors.white,
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Colors.blue.shade400,
+                            )),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.black54)),
+                        errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            )),
+                      ),
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please enter a username";
+                        }
+                      },
+                      onSaved: (newValue) => user.Username = newValue,
+                    )),
+                const SizedBox(
+                  height: 20,
+                ),
+                FractionallySizedBox(
+                    widthFactor: .8,
+                    child: TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: "Password",
+                        filled: true,
+                        fillColor: Colors.white,
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Colors.blue.shade400,
+                            )),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.black54)),
+                        errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            )),
+                      ),
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please enter a password";
+                        }
+                        user.Password = value;
+                      },
+                      onSaved: (newValue) => user.Password = newValue,
+                    )),
+                const SizedBox(
+                  height: 20,
+                ),
+                FractionallySizedBox(
+                    widthFactor: .8,
+                    child: TextFormField(
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: "Confirm password",
+                        filled: true,
+                        fillColor: Colors.white,
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(
+                              color: Colors.blue.shade400,
+                            )),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide:
+                                const BorderSide(color: Colors.black54)),
+                        errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(
+                              color: Colors.red,
+                            )),
+                      ),
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value!.isEmpty || value != user.Password) {
+                          return "Passwords must match";
+                        }
+                      },
+                      //onSaved: (newValue) => user.Username = newValue,
+                    )),
+                const SizedBox(
+                  height: 10,
+                ),
+                FractionallySizedBox(
+                    widthFactor: .3,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final form = formKey.currentState!;
+                        if (form.validate()) {
+                          form.save();
 
-                  if (request.statusCode == 200) {
-                    Map<String, dynamic> data = jsonDecode(request.body);
+                          final request = await http.post(
+                              Uri.parse("http://10.0.2.2:8888/user/"),
+                              headers: <String, String>{
+                                'Content-Type': 'application/json'
+                              },
+                              body: jsonEncode(user.toJson()));
 
-                    await storage.write(key: "jwt", value: data['token']);
-                    await storage.write(
-                        key: "username", value: data['username']);
-                    isAuthenticated = true;
-                  }
-                }
-                setState(() {
-                  /////////////////////////// Do stuff
-                  pages[0] = RecipePage();
-                });
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-              child: const Text(
-                "Sign Up",
-                style: TextStyle(color: Colors.black),
-              ),
-            ),
-          ],
-        ));
+                          if (request.statusCode == 200) {
+                            Map<String, dynamic> data =
+                                jsonDecode(request.body);
+
+                            await storage.write(
+                                key: "jwt", value: data['token']);
+                            await storage.write(
+                                key: "username", value: data['username']);
+                            isAuthenticated = true;
+                          }
+
+                          setState(() {
+                            pages[0] = RecipePage();
+                          });
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.lightBlue.shade400,
+                          fixedSize: Size(20, 30)),
+                      child: const Text(
+                        "Sign Up",
+                        style: TextStyle(color: Colors.white, fontSize: 16),
+                      ),
+                    )),
+              ],
+            )));
   }
 
   void swipe(int index, AppinioSwiperDirection direction) async {
@@ -966,25 +1024,28 @@ class _TestWidget extends State<TestWidget> {
           backgroundColor: Colors.black,
           body: SafeArea(child: Center(child: pages.elementAt(_selectedIndex))),
           bottomNavigationBar: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
+            iconSize: 28,
+            selectedFontSize: 16,
+            type: BottomNavigationBarType.shifting,
+            items: <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Icon(Icons.restaurant_menu),
                 label: 'Recipes',
-                backgroundColor: Colors.green,
+                backgroundColor: Colors.lightBlue[400],
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.home),
                 label: 'Home',
-                backgroundColor: Colors.red,
+                backgroundColor: Colors.deepOrange[400],
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.settings),
-                label: 'Settings',
-                backgroundColor: Colors.pink,
+                icon: Icon(Icons.add_circle_outline_rounded),
+                label: 'Add Recipe',
+                backgroundColor: Colors.yellow[700],
               ),
             ],
             currentIndex: _selectedIndex,
-            selectedItemColor: Colors.amber[800],
+            selectedItemColor: Colors.white,
             onTap: _onItemTapped,
           ));
     }

@@ -18,7 +18,7 @@ enum PhotoSource { FILE, NETWORK }
 
 class ImagePickerWidget extends StatefulWidget {
   final Function setImage;
-  ImagePickerWidget(this.setImage);
+  const ImagePickerWidget(this.setImage);
 
   @override
   _ImagePickerWidgetState createState() => _ImagePickerWidgetState();
@@ -28,7 +28,6 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
   XFile? _photos;
   String? _photoUrl;
   PhotoSource? _photoSource;
-  //List<GalleryItem> _galleryItems = [];
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +36,11 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
     }
     return InkWell(
       onTap: () => _onAddPhotoClicked(context),
-      child: Image.file(File(_photos!.path)),
+      child: Container(
+        decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),
+        ),
+        child: Image.file(File(_photos!.path)
+      )),
     );
     // return Scaffold(
     //   body: Column(
@@ -97,17 +100,19 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
 
   _buildAddPhoto() {
     return InkWell(
+      borderRadius: BorderRadius.circular(10),
       onTap: () => _onAddPhotoClicked(context),
       child: Container(
-        margin: EdgeInsets.all(5),
-        height: 100,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          color: kDarkGray
+        ),
+        margin: const EdgeInsets.all(5),
+        height: 75,
         width: 100,
-        color: kDarkGray,
-        child: Center(
-          child: Icon(
-            Icons.add_to_photos,
-            color: kLightGray,
-          ),
+        child: const Icon(
+          Icons.add_to_photos,
+          color: kLightGray,
         ),
       ),
     );
@@ -179,14 +184,6 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       if (image != null) {
         String fileExtension = p.extension(image.path);
 
-        // _galleryItems.add(
-        //   GalleryItem(
-        //     id: Uuid().v1(),
-        //     resource: image.path,
-        //     isSvg: fileExtension.toLowerCase() == ".svg",
-        //   ),
-        // );
-
         setState(() {
           _photos = image;
           _photoSource = PhotoSource.FILE;
@@ -195,12 +192,4 @@ class _ImagePickerWidgetState extends State<ImagePickerWidget> {
       }
     }
   }
-}
-
-class GalleryItem {
-  GalleryItem({this.id, this.resource, this.isSvg = false});
-
-  final String? id;
-  String? resource;
-  final bool isSvg;
 }

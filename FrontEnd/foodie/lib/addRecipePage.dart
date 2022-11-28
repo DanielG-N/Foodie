@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:foodie/ImagePicker.dart';
 import 'package:foodie/recipe.dart';
 import 'package:foodie/s3access.dart';
@@ -8,6 +9,7 @@ import 'dart:convert';
 import 'package:minio/minio.dart';
 import 'package:minio/io.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
@@ -16,22 +18,93 @@ class AddRecipePage extends StatefulWidget {
   State<AddRecipePage> createState() => _AddRecipePage();
 }
 
-class _AddRecipePage extends State<AddRecipePage> {
-  Recipe recipe = Recipe();
+class _AddRecipePage extends State<AddRecipePage>
+    with TickerProviderStateMixin {
+  final storage = const FlutterSecureStorage();
+  Recipe recipe = Recipe(ingredients: [], instructions: []);
   final formKey = GlobalKey<FormState>();
-  int ingredientsIndex = 4;
-  int instructionsIndex = 8;
+  int ingredientsIndex = 7;
+  int instructionsIndex = 10;
   List<Widget> formWidgets = [];
   XFile? image;
+  AnimationController? _controllerAddIngredient;
+  Animation<double>? _animationAddIngredient;
+  AnimationController? _controllerRemoveIngredient;
+  Animation<double>? _animationRemoveIngredient;
 
-  _AddRecipePage() {
+  AnimationController? _controllerAddInstruction;
+  Animation<double>? _animationAddInstruction;
+  AnimationController? _controllerRemoveInstruction;
+  Animation<double>? _animationRemoveInstruction;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controllerAddIngredient = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    )..forward();
+    _animationAddIngredient = Tween<double>(begin: .5, end: 1).animate(_controllerAddIngredient!);
+
+    _controllerRemoveIngredient = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animationRemoveIngredient = CurvedAnimation(
+      parent: _controllerRemoveIngredient!,
+      curve: Curves.linear,
+    );
+
+    _controllerAddInstruction = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    )..forward();
+    _animationAddInstruction = Tween<double>(begin: .5, end: 1).animate(_controllerAddInstruction!);
+
+    _controllerRemoveInstruction = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _animationRemoveInstruction = CurvedAnimation(
+      parent: _controllerRemoveInstruction!,
+      curve: Curves.linear,
+    );
+
+
     formWidgets.addAll([
+      const SizedBox(
+        height: 20,
+      ),
+      const Text(
+        "Add a recipe",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+            color: Colors.black, fontFamily: "LobsterTwo", fontSize: 20),
+      ),
       TextFormField(
-        decoration: const InputDecoration(
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.all(10),
           hintText: "Title",
           filled: true,
           fillColor: Colors.white,
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.blue.shade400,
+              )),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.black54)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              )),
         ),
+        textAlign: TextAlign.center,
         validator: (value) {
           if (value!.isEmpty) {
             return "Please enter a title";
@@ -41,126 +114,176 @@ class _AddRecipePage extends State<AddRecipePage> {
       ),
       TextFormField(
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.all(10),
+          hintText: "Time (minutes)",
           filled: true,
           fillColor: Colors.white,
-          labelStyle: TextStyle(backgroundColor: Colors.white),
-          hintText: "Time minutes",
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.blue.shade400,
+              )),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.black54)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              )),
         ),
+        textAlign: TextAlign.center,
         validator: (value) {
           if (value!.isEmpty) {
-            return "Please input a time";
+            return "Please enter a time";
           }
         },
         onSaved: (newValue) => recipe.time = num.tryParse(newValue!),
       ),
       TextFormField(
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.all(10),
+          hintText: "Servings",
           filled: true,
           fillColor: Colors.white,
-          labelStyle: TextStyle(backgroundColor: Colors.white),
-          hintText: "Servings",
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.blue.shade400,
+              )),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.black54)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              )),
         ),
+        textAlign: TextAlign.center,
         validator: (value) {
           if (value!.isEmpty) {
-            return "Please input the number of servings";
+            return "Please enter the number of servings";
           }
         },
-        onSaved: (newValue) => recipe.yeild = "$newValue Servings",
+        onSaved: (newValue) =>
+            recipe.yeild = "${num.tryParse(newValue!)} Servings",
       ),
       const Text(
         "Ingredients",
-        style: TextStyle(color: Colors.white),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+            color: Colors.black, fontFamily: "LobsterTwo", fontSize: 16),
       ),
-      TextFormField(
-        keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          labelStyle: TextStyle(backgroundColor: Colors.white),
-          //hintText: "Ingredients",
-        ),
-        validator: (value) {
-          if (value!.isEmpty) {
-            return "Please input an ingedient";
-          }
-        },
-        onSaved: (newValue) => recipe.ingredients!.add(newValue!),
-      ),
-      ElevatedButton(
-          onPressed: () {
-            setState(() {
-              formWidgets.insert(
-                ingredientsIndex,
-                TextFormField(
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    labelStyle: TextStyle(backgroundColor: Colors.white),
-                    //hintText: "Ingredients",
-                  ),
-                  validator: (value) {
-                    if (value!.isEmpty) {
-                      return "Please input an ingredient";
-                    }
-                  },
-                  onSaved: (newValue) => recipe.ingredients!.add(newValue!),
-                ),
-              );
-              ingredientsIndex++;
-              instructionsIndex++;
-            });
-          },
-          child: const Icon(Icons.add_circle_outline_rounded)),
+      customIngredientTextFormField(),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: SizeTransition(
+                sizeFactor: _animationAddIngredient!,
+                axis: Axis.horizontal,
+                child: SizedBox(
+                    width: 300,
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.lightBlue[400]),
+                        onPressed: () {
+                          setState(() {
+                            if (ingredientsIndex == 7) {
+                              toggleButtonsIngredient();
+                            }
+                            formWidgets.insert(ingredientsIndex,
+                                customIngredientTextFormField());
+                            ingredientsIndex++;
+                            instructionsIndex++;
+                          });
+                        },
+                        child: const Icon(Icons.add_circle_outline_rounded))))),
+        SizeTransition(
+            sizeFactor: _animationRemoveIngredient!,
+            axis: Axis.horizontal,
+            axisAlignment: 1,
+            child: SizedBox(
+                width: 150,
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        if (ingredientsIndex == 8) {
+                          toggleButtonsIngredient();
+                        }
+                        formWidgets.removeAt(ingredientsIndex - 1);
+                        ingredientsIndex--;
+                        instructionsIndex--;
+                      });
+                    },
+                    child: const Icon(Icons.remove_circle_outline_rounded)))),
+      ]),
       const Text(
         "Instructions",
-        style: TextStyle(color: Colors.white),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+            color: Colors.black, fontFamily: "LobsterTwo", fontSize: 16),
       ),
-      TextFormField(
-        decoration: const InputDecoration(
-          filled: true,
-          fillColor: Colors.white,
-          labelStyle: TextStyle(backgroundColor: Colors.white),
-          //hintText: "Ingredients",
-        ),
-        validator: (value) {
-          if (value!.isEmpty) {
-            return "Please input an instruction";
-          }
-        },
-        onSaved: (newValue) => recipe.instructions!.add(newValue!),
-      ),
-      ElevatedButton(
-          onPressed: () {
-            setState(() {
-              addItem(
-                  TextFormField(
-                    decoration: const InputDecoration(
-                      filled: true,
-                      fillColor: Colors.white,
-                      labelStyle: TextStyle(backgroundColor: Colors.white),
-                      //hintText: "Ingredients",
-                    ),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return "Please input an instruction";
-                      }
+      customInstructionTextFormField(),
+      Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        ClipRRect(
+            borderRadius: BorderRadius.circular(15),
+            child: SizeTransition(
+                sizeFactor: _animationAddInstruction!,
+                axis: Axis.horizontal,
+                child: SizedBox(
+                    width: 300,
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.lightBlue[400]),
+                        onPressed: () {
+                          setState(() {
+                            if (instructionsIndex == ingredientsIndex + 3) {
+                              toggleButtonsInstruction();
+                            }
+                            formWidgets.insert(instructionsIndex,
+                                customIngredientTextFormField());
+                            instructionsIndex++;
+                          });
+                        },
+                        child: const Icon(Icons.add_circle_outline_rounded))))),
+        SizeTransition(
+            sizeFactor: _animationRemoveInstruction!,
+            axis: Axis.horizontal,
+            axisAlignment: 1,
+            child: SizedBox(
+                width: 150,
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red),
+                    onPressed: () {
+                      setState(() {
+                        if (instructionsIndex == ingredientsIndex + 4) {
+                          toggleButtonsInstruction();                        
+                        }
+                        formWidgets.removeAt(instructionsIndex - 1);
+                        instructionsIndex--;
+                      });
                     },
-                    onSaved: (newValue) => recipe.instructions!.add(newValue!),
-                  ),
-                  instructionsIndex);
-            });
-            instructionsIndex++;
-          },
-          child: const Icon(Icons.add_circle_outline_rounded)),
+                    child: const Icon(Icons.remove_circle_outline_rounded)))),
+      ]),
       ImagePickerWidget(setImage),
       ElevatedButton(
         onPressed: () async {
           final form = formKey.currentState!;
           if (form.validate()) {
             form.save();
+            recipe.author = await storage.read(key: "username");
+            recipe.url =
+                "foodie/${recipe.author}/${recipe.title!.replaceAll(' ', '-')}";
             recipe.image = await uploadImage();
 
             final request = await http.post(
@@ -168,13 +291,16 @@ class _AddRecipePage extends State<AddRecipePage> {
                 headers: <String, String>{'Content-Type': 'application/json'},
                 body: jsonEncode(recipe.toJson()));
 
+            print(request.statusCode);
+
             if (request.statusCode == 200) {
               Map<String, dynamic> data = jsonDecode(request.body);
+              print(data);
             }
+            setState(() {
+              //////////////////////////////////////////
+            });
           }
-          setState(() {
-            //////////////////////////////////////////
-          });
         },
         style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
         child: const Text(
@@ -185,19 +311,121 @@ class _AddRecipePage extends State<AddRecipePage> {
     ]);
   }
 
+  _AddRecipePage() {
+    // _controller = AnimationController(
+    //   duration: const Duration(seconds: 1),
+    //   vsync: this,
+    // );
+    // _animation = CurvedAnimation(
+    //   parent: _controller,
+    //   curve: Curves.fastLinearToSlowEaseIn,
+    // );
+  }
+
   Future<String> uploadImage() async {
     var minio = Minio(
-      endPoint: "s3.amazonaws.com",
-      accessKey: getAccessKey(),
-      secretKey: getsecretKey(),
-      region: "us-west-2"
-    );
+        endPoint: "s3.amazonaws.com",
+        accessKey: getAccessKey(),
+        secretKey: getsecretKey(),
+        region: "us-west-2");
 
     var path = "images/${image!.name}";
 
-    await minio.fPutObject("fooodie", path, image!.path, {'x-amz-acl': 'public-read'});
+    await minio
+        .fPutObject("fooodie", path, image!.path, {'x-amz-acl': 'public-read'});
 
     return "https://fooodie.s3.us-west-2.amazonaws.com/$path";
+  }
+
+  Widget customInstructionTextFormField() {
+    return TextFormField(
+        minLines: 1,
+        maxLines: 10000,
+        //expands: true,
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.all(10),
+          //hintText: "Title",
+          filled: true,
+          fillColor: Colors.white,
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.blue.shade400,
+              )),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.black54)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              )),
+          //suffix: IconButton(onPressed: (){}, icon: Icon(Icons.remove_circle_outline_rounded))
+        ),
+        textAlign: TextAlign.center,
+        validator: (value) {
+          if (value!.isEmpty) {
+            return "Please enter an instruction";
+          }
+        },
+        onSaved: (newValue) => recipe.instructions!.add(newValue!));
+  }
+
+  Widget customIngredientTextFormField() {
+    return TextFormField(
+        minLines: 1,
+        maxLines: 10000,
+        textAlignVertical: TextAlignVertical.center,
+        decoration: InputDecoration(
+          isCollapsed: true,
+          contentPadding: const EdgeInsets.all(10),
+          //hintText: "Title",
+          filled: true,
+          fillColor: Colors.white,
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(
+                color: Colors.blue.shade400,
+              )),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: Colors.black54)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(
+                color: Colors.red,
+              )),
+          //suffix: IconButton(onPressed: (){}, icon: Icon(Icons.remove_circle_outline_rounded))
+        ),
+        textAlign: TextAlign.center,
+        validator: (value) {
+          if (value!.isEmpty) {
+            return "Please enter an ingredient";
+          }
+        },
+        onSaved: (newValue) => recipe.ingredients!.add(newValue!));
+  }
+
+  void toggleButtonsIngredient() {
+    if (_animationAddIngredient!.status != AnimationStatus.completed) {
+      _controllerAddIngredient!.forward();
+      _controllerRemoveIngredient!.animateBack(0, duration: Duration(milliseconds: 500));
+    } else {
+      _controllerAddIngredient!.animateBack(0, duration: Duration(milliseconds: 500));
+      _controllerRemoveIngredient!.forward();
+    }
+  }
+
+    void toggleButtonsInstruction() {
+    if (_animationAddInstruction!.status != AnimationStatus.completed) {
+      _controllerAddInstruction!.forward();
+      _controllerRemoveInstruction!.animateBack(0, duration: Duration(milliseconds: 500));
+    } else {
+      _controllerAddInstruction!.animateBack(0, duration: Duration(milliseconds: 500));
+      _controllerRemoveInstruction!.forward();
+    }
   }
 
   void setImage(XFile image) {
@@ -205,17 +433,30 @@ class _AddRecipePage extends State<AddRecipePage> {
   }
 
   void addItem(Widget item, int index) {
-    print(item);
+    //print(item);
     formWidgets.insert(index, item);
-    print(formWidgets);
+    //print(formWidgets);
   }
 
   @override
   Widget build(BuildContext context) {
     return Form(
         key: formKey,
-        child: ListView.builder(
-            itemCount: formWidgets.length,
-            itemBuilder: ((context, index) => formWidgets[index])));
+        child: Container(
+            width: MediaQuery.of(context).size.width * .9,
+            height: MediaQuery.of(context).size.height * .85,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: ListView.separated(
+                separatorBuilder: (context, index) => const SizedBox(
+                      height: 5,
+                    ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                ),
+                itemCount: formWidgets.length,
+                itemBuilder: ((context, index) => formWidgets[index]))));
   }
 }

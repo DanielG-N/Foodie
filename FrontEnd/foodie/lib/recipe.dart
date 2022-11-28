@@ -4,8 +4,8 @@ class Recipe {
   String? author;
   num? time;
   String? yeild;
-  List<String>? ingredients;
-  List<String>? instructions;
+  List<String>? ingredients = [];
+  List<String>? instructions = [];
   String? image;
   Recipe(
       {this.url,
