@@ -44,6 +44,7 @@ dependencies:
   loading_animation_widget: ^1.2.0+3
   confetti: ^0.7.0
   flutter_fadein: ^2.0.0
+  tab_indicator_styler: ^2.0.0
 
 
 
@@ -81,6 +82,10 @@ flutter:
   - assets/images/blackLogo.png
   - assets/images/logoWhite.png
   - assets/images/loading.gif
+  - assets/images/loading2.gif
+  - assets/images/loading3.gif
+  - assets/images/loading4.gif
+  - assets/images/loading5.gif
   - assets/images/sadPig.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -27,9 +27,25 @@ public class UserRecipesController : ControllerBase
         return Results.NoContent();
     }
 
+    [HttpPut("my/{username}")]
+    public async Task<IResult> SaveMyRecipe([FromBody] string url, [FromRoute]string username)
+    {
+        var update = Builders<UserRecipes>.Update
+            .Push(u => u.MyRecipes, url);
+
+        await _userRecipesDB.UpdateOneAsync(u => u.Username == username, update, new UpdateOptions{IsUpsert = true}, default);
+        return Results.NoContent();
+    }
+
     [HttpGet("{username}")]
     public async Task<ActionResult<List<string>>> GetSavedRecipes(string username){
         UserRecipes savedRecipes = await _userRecipesDB.Find(ur => ur.Username == username).FirstOrDefaultAsync();
         return savedRecipes.SavedRecipes;
+    }
+
+    [HttpGet("my/{username}")]
+    public async Task<ActionResult<List<string>>> GetMyRecipes(string username){
+        UserRecipes savedRecipes = await _userRecipesDB.Find(ur => ur.Username == username).FirstOrDefaultAsync();
+        return savedRecipes.MyRecipes;
     }
 }

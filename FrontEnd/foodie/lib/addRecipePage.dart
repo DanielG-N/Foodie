@@ -46,7 +46,8 @@ class _AddRecipePage extends State<AddRecipePage>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     )..forward();
-    _animationAddIngredient = Tween<double>(begin: .5, end: 1).animate(_controllerAddIngredient!);
+    _animationAddIngredient =
+        Tween<double>(begin: .5, end: 1).animate(_controllerAddIngredient!);
 
     _controllerRemoveIngredient = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -61,7 +62,8 @@ class _AddRecipePage extends State<AddRecipePage>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     )..forward();
-    _animationAddInstruction = Tween<double>(begin: .5, end: 1).animate(_controllerAddInstruction!);
+    _animationAddInstruction =
+        Tween<double>(begin: .5, end: 1).animate(_controllerAddInstruction!);
 
     _controllerRemoveInstruction = AnimationController(
       duration: const Duration(milliseconds: 500),
@@ -71,7 +73,6 @@ class _AddRecipePage extends State<AddRecipePage>
       parent: _controllerRemoveInstruction!,
       curve: Curves.linear,
     );
-
 
     formWidgets.addAll([
       const SizedBox(
@@ -213,8 +214,8 @@ class _AddRecipePage extends State<AddRecipePage>
             child: SizedBox(
                 width: 150,
                 child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
                     onPressed: () {
                       setState(() {
                         if (ingredientsIndex == 8) {
@@ -263,12 +264,12 @@ class _AddRecipePage extends State<AddRecipePage>
             child: SizedBox(
                 width: 150,
                 child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red),
+                    style:
+                        ElevatedButton.styleFrom(backgroundColor: Colors.red),
                     onPressed: () {
                       setState(() {
                         if (instructionsIndex == ingredientsIndex + 4) {
-                          toggleButtonsInstruction();                        
+                          toggleButtonsInstruction();
                         }
                         formWidgets.removeAt(instructionsIndex - 1);
                         instructionsIndex--;
@@ -282,7 +283,8 @@ class _AddRecipePage extends State<AddRecipePage>
           final form = formKey.currentState!;
           if (form.validate()) {
             form.save();
-            recipe.author = await storage.read(key: "username");
+            String? username = await storage.read(key: 'username');
+            recipe.author = username;
             recipe.url =
                 "foodie/${recipe.author}/${recipe.title!.replaceAll(' ', '-')}";
             recipe.image = await uploadImage();
@@ -298,8 +300,14 @@ class _AddRecipePage extends State<AddRecipePage>
               Map<String, dynamic> data = jsonDecode(request.body);
               print(data);
             }
+
+            final response = await http.put(
+                Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"),
+                headers: <String, String>{'Content-Type': 'application/json'},
+                body: jsonEncode(recipe.url));
             setState(() {
-              //////////////////////////////////////////
+              form.reset();
+              
             });
           }
         },
@@ -412,19 +420,23 @@ class _AddRecipePage extends State<AddRecipePage>
   void toggleButtonsIngredient() {
     if (_animationAddIngredient!.status != AnimationStatus.completed) {
       _controllerAddIngredient!.forward();
-      _controllerRemoveIngredient!.animateBack(0, duration: Duration(milliseconds: 500));
+      _controllerRemoveIngredient!
+          .animateBack(0, duration: Duration(milliseconds: 500));
     } else {
-      _controllerAddIngredient!.animateBack(0, duration: Duration(milliseconds: 500));
+      _controllerAddIngredient!
+          .animateBack(0, duration: Duration(milliseconds: 500));
       _controllerRemoveIngredient!.forward();
     }
   }
 
-    void toggleButtonsInstruction() {
+  void toggleButtonsInstruction() {
     if (_animationAddInstruction!.status != AnimationStatus.completed) {
       _controllerAddInstruction!.forward();
-      _controllerRemoveInstruction!.animateBack(0, duration: Duration(milliseconds: 500));
+      _controllerRemoveInstruction!
+          .animateBack(0, duration: Duration(milliseconds: 500));
     } else {
-      _controllerAddInstruction!.animateBack(0, duration: Duration(milliseconds: 500));
+      _controllerAddInstruction!
+          .animateBack(0, duration: Duration(milliseconds: 500));
       _controllerRemoveInstruction!.forward();
     }
   }
@@ -433,31 +445,27 @@ class _AddRecipePage extends State<AddRecipePage>
     this.image = image;
   }
 
-  void addItem(Widget item, int index) {
-    //print(item);
-    formWidgets.insert(index, item);
-    //print(formWidgets);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Form(
         key: formKey,
-        child: FadeIn(duration: Duration(milliseconds: 400), child: Container(
-            width: MediaQuery.of(context).size.width * .9,
-            height: MediaQuery.of(context).size.height * .85,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ListView.separated(
-                separatorBuilder: (context, index) => const SizedBox(
-                      height: 5,
-                    ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
+        child: FadeIn(
+            duration: Duration(milliseconds: 400),
+            child: Container(
+                width: MediaQuery.of(context).size.width * .9,
+                height: MediaQuery.of(context).size.height * .85,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                itemCount: formWidgets.length,
-                itemBuilder: ((context, index) => formWidgets[index])))));
+                child: ListView.separated(
+                    separatorBuilder: (context, index) => const SizedBox(
+                          height: 5,
+                        ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30,
+                    ),
+                    itemCount: formWidgets.length,
+                    itemBuilder: ((context, index) => formWidgets[index])))));
   }
 }

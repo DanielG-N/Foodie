@@ -12,6 +12,7 @@ import 'package:animations/animations.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_fadein/flutter_fadein.dart';
+import 'package:tab_indicator_styler/tab_indicator_styler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -66,6 +67,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
   AnimationController? _controllerHeart;
   Animation<double>? _animationHeart;
   late ConfettiController _controllerCenter;
+  late TabController tabController;
 
   _HomeWidget() {
     init();
@@ -74,6 +76,8 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
 
   void init() async {
     isAuthenticated = await checkAuth();
+
+    tabController = TabController(length: 2, vsync: this);
 
     _controllerCenter =
         ConfettiController(duration: const Duration(milliseconds: 500));
@@ -89,71 +93,72 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
 
     pages.addAll([
       RecipePage(),
-      FadeIn(duration: Duration(milliseconds: 400), child: Stack(
-        alignment: Alignment.center,
-          //height: double.infinity,
-          //width: double.infinity,
-          children: [
-            Column(children: [
-              TextField(
-                controller: searchText,
-                decoration: InputDecoration(
-                  suffixIcon: IconButton(
-                      icon: Icon(Icons.search),
-                      onPressed: () {
-                        getRecipes(searchText.text);
-                      }),
-                  suffixIconColor: Colors.white,
-                  filled: true,
-                  fillColor: Colors.white,
-                  //contentPadding: EdgeInsets.only(top: 50),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide.none),
-                  hintText: "Search recipes",
+      FadeIn(
+          duration: Duration(milliseconds: 400),
+          child: Stack(alignment: Alignment.center,
+              //height: double.infinity,
+              //width: double.infinity,
+              children: [
+                Column(children: [
+                  TextField(
+                    controller: searchText,
+                    decoration: InputDecoration(
+                      suffixIcon: IconButton(
+                          icon: Icon(Icons.search),
+                          onPressed: () {
+                            getRecipes(searchText.text);
+                          }),
+                      suffixIconColor: Colors.white,
+                      filled: true,
+                      fillColor: Colors.white,
+                      //contentPadding: EdgeInsets.only(top: 50),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide.none),
+                      hintText: "Search recipes",
+                    ),
+                    onEditingComplete: () => getRecipes(searchText.text),
+                  ),
+                  Expanded(
+                      child: FractionallySizedBox(
+                    child: AppinioSwiper(
+                      controller: swipeController,
+                      unlimitedUnswipe: true,
+                      onSwipe: swipe,
+                      cards: recipes,
+                    ),
+                  ))
+                ]),
+                Center(
+                    //alignment: Alignment.center,
+                    child: SizeTransition(
+                  sizeFactor: _animationHeart!,
+                  child: const Icon(
+                    Icons.favorite,
+                    color: Colors.pink,
+                    size: 410,
+                    shadows: [
+                      Shadow(
+                          color: Colors.black54,
+                          blurRadius: 30,
+                          offset: Offset(0, 2))
+                    ],
+                  ),
+                )),
+                Align(
+                  alignment: Alignment.center,
+                  child: ConfettiWidget(
+                    numberOfParticles: 20,
+                    maxBlastForce: 50,
+                    gravity: .5,
+                    confettiController: _controllerCenter,
+                    blastDirectionality: BlastDirectionality.explosive,
+                    colors: const [
+                      Colors.pink,
+                    ],
+                  ),
                 ),
-                onEditingComplete: () => getRecipes(searchText.text),
-              ),
-              Expanded(
-                  child: FractionallySizedBox(
-                child: AppinioSwiper(
-                  controller: swipeController,
-                  unlimitedUnswipe: true,
-                  onSwipe: swipe,
-                  cards: recipes,
-                ),
-              ))
-            ]),
-            Center(
-                //alignment: Alignment.center,
-                child: SizeTransition(
-              sizeFactor: _animationHeart!,
-              child: const Icon(
-                Icons.favorite,
-                color: Colors.pink,
-                size: 410,
-                shadows: [
-                  Shadow(
-                      color: Colors.black54,
-                      blurRadius: 30,
-                      offset: Offset(0, 2))
-                ],
-              ),
-            )),
-            Align(
-              alignment: Alignment.center,
-              child: ConfettiWidget(
-                numberOfParticles: 20,
-                maxBlastForce: 50,
-                gravity: .5,
-                confettiController: _controllerCenter,
-                blastDirectionality: BlastDirectionality.explosive,
-                colors: const [
-                  Colors.pink,
-                ],
-              ),
-            ),
-          ])),
+              ])),
       const AddRecipePage()
     ]);
   }
@@ -294,75 +299,211 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
     }
   }
 
+  Future<List<Recipe>?> getMyRecipes() async {
+    final username = await storage.read(key: "username");
+    print(username);
+    var response =
+        await http.get(Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"));
+    print(response.body);
+
+    if (response.body.isNotEmpty) {
+      final List<dynamic> urls = jsonDecode(response.body);
+
+      response = await http.post(
+          Uri.parse("http://10.0.2.2:8888/recipe/savedRecipes"),
+          headers: <String, String>{'Content-Type': 'application/json'},
+          body: jsonEncode(urls));
+
+      List<Recipe> recipeList = (jsonDecode(response.body) as List)
+          .map((e) => Recipe.fromJson(e))
+          .toList();
+
+      return recipeList;
+    } else {
+      return null;
+    }
+  }
+
   Widget SavedRecipesPage() {
-    return FutureBuilder(
-      future: getSavedRecipes(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return Container();
-          //LoadingAnimationWidget.stretchedDots(color: Colors.white, size: 200);
-        }
-        if (snapshot.hasData) {
-          return FadeIn(
-              duration: Duration(milliseconds: 400),
-              child: Container(
-                  child: CustomScrollView(
-                primary: false,
-                slivers: <Widget>[
-                  SliverPadding(
-                    padding: const EdgeInsets.all(20),
-                    sliver: SliverGrid.count(
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      crossAxisCount: 2,
-                      children: <Widget>[
-                        for (var recipe in snapshot.data!)
-                          createSavedRecipesCard(recipe)
-                      ],
-                    ),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: TabBar(
+        indicatorColor: Colors.lightBlue[400],
+        indicator: RectangularIndicator(
+          color: Colors.lightBlue[400]!,
+          bottomLeftRadius: 10,
+          bottomRightRadius: 10,
+          topLeftRadius: 10,
+          topRightRadius: 10
+        ),
+        controller: tabController,
+        tabs: const [
+          Text(
+            "Saved Recipes",
+            style: TextStyle(color: Colors.white, fontFamily: "LobsterTwo", fontSize: 24),
+          ),
+          Text(
+            "My Recipes",
+            style: TextStyle(color: Colors.white, fontFamily: "LobsterTwo", fontSize: 24),
+          )
+        ],
+      ),
+      body: TabBarView(
+        controller: tabController,
+        children: [
+        // Saved recipes
+        FutureBuilder(
+          future: getSavedRecipes(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return Container();
+            }
+            if (snapshot.hasData) {
+              return FadeIn(
+                  duration: Duration(milliseconds: 400),
+                  child: Container(
+                      child: CustomScrollView(
+                    primary: false,
+                    slivers: <Widget>[
+                      SliverPadding(
+                        padding: const EdgeInsets.all(20),
+                        sliver: SliverGrid.count(
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          crossAxisCount: 2,
+                          children: <Widget>[
+                            for (var recipe in snapshot.data!)
+                              createSavedRecipesCard(recipe)
+                          ],
+                        ),
+                      ),
+                    ],
+                  )));
+            } else {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "Oh no!\nIt looks you dont have any saved recipes.",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "LobsterTwo",
+                        fontSize: 24),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+
+                  Image.asset("assets/images/sadPig.gif"),
+
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  const Text(
+                    "Swipe right on a recipe to save it.",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "LobsterTwo",
+                        fontSize: 24),
                   ),
                 ],
-              )));
-        } else {
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Oh no!\nIt looks you dont have any saved recipes.",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: "LobsterTwo",
-                    fontSize: 24),
-                textAlign: TextAlign.center,
-              ),
-              Image.asset("assets/images/sadPig.gif"),
-              const Text(
-                "Swipe right on a recipe to save it.",
-                style: TextStyle(
-                    color: Colors.white,
-                    fontFamily: "LobsterTwo",
-                    fontSize: 24),
-              ),
-            ],
-          );
-        }
-      },
+              );
+            }
+          },
+        ),
+        // My recipes
+        FutureBuilder(
+          future: getMyRecipes(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState != ConnectionState.done) {
+              return Container();
+            }
+            if (snapshot.hasData) {
+              return FadeIn(
+                  duration: Duration(milliseconds: 400),
+                  child: Container(
+                      child: CustomScrollView(
+                    primary: false,
+                    slivers: <Widget>[
+                      SliverPadding(
+                        padding: const EdgeInsets.all(20),
+                        sliver: SliverGrid.count(
+                          crossAxisSpacing: 10,
+                          mainAxisSpacing: 10,
+                          crossAxisCount: 2,
+                          children: <Widget>[
+                            for (var recipe in snapshot.data!)
+                              createSavedRecipesCard(recipe)
+                          ],
+                        ),
+                      ),
+                    ],
+                  )));
+            } else {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "You haven't made any Recipes!",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "LobsterTwo",
+                        fontSize: 24),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(
+                    height: 60,
+                  ),
+
+                  Image.asset("assets/images/sadPig.gif"),
+
+                  const SizedBox(
+                    height: 60,
+                  ),
+                  
+                  const Text(
+                    "Add a recipe and it will be right here!",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontFamily: "LobsterTwo",
+                        fontSize: 24),
+                  ),
+                ],
+              );
+            }
+          },
+        ),
+      ]),
     );
   }
 
   Card createSavedRecipeClosedCard(Recipe recipe) {
     return Card(
       child: Column(children: [
-        Container(
-          height: MediaQuery.of(context).size.height * .2,
-          width: MediaQuery.of(context).size.width,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(5),
-            image: DecorationImage(
-                image: NetworkImage(recipe.image!), fit: BoxFit.cover),
-          ),
-        ),
+        ClipRRect(
+                borderRadius: BorderRadius.circular(5),
+                child: FadeInImage(
+                  //fadeOutDuration: Duration(seconds: 1),
+                  //fadeInDuration: Duration(seconds: 1),
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height * .2,
+                  placeholder: randomLoading(),
+                  image: NetworkImage(recipe.image!),
+                  fit: BoxFit.fill,
+                  imageErrorBuilder: (context, error, stackTrace) =>
+                      Image.asset("assets/images/loading.gif"),
+                )),
+        // Container(
+        //   height: MediaQuery.of(context).size.height * .2,
+        //   width: MediaQuery.of(context).size.width,
+        //   alignment: Alignment.center,
+        //   decoration: BoxDecoration(
+        //     borderRadius: BorderRadius.circular(5),
+        //     image: DecorationImage(
+        //         image: NetworkImage(recipe.image!), fit: BoxFit.cover),
+        //   ),
+        // ),
         Container(
             margin: const EdgeInsets.only(top: 4),
             alignment: Alignment.center,
@@ -404,6 +545,19 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
     ];
 
     return (colorList..shuffle()).first;
+  }
+
+  AssetImage randomLoading() {
+    var loadingList = [
+      "assets/images/loading.gif",
+      "assets/images/loading2.gif",
+      "assets/images/loading3.gif",
+      "assets/images/loading4.gif",
+      "assets/images/loading5.gif"
+
+    ];
+
+    return AssetImage((loadingList..shuffle()).first);
   }
 
   bool error = false;

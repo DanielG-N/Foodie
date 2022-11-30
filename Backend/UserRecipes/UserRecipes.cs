@@ -8,4 +8,5 @@ public class UserRecipes
     public string? Id { get; set; }
     public string Username {get; set;} = null!;
     public List<string> SavedRecipes { get; set; } = null!;
+    public List<string> MyRecipes { get; set; } = null!;
 }
