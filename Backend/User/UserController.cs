@@ -26,6 +26,9 @@ namespace Controllers
         [Route("")]
         public async Task<IResult> AddUser(User user)
         {
+            if(await _db.Users.Where(u => u.Username == user.Username).SingleOrDefaultAsync() != null)
+                return Results.Conflict();
+            
             user.Password = EnhancedHashPassword(user.Password);
             _db.Users.Add(user);
             await _db.SaveChangesAsync();

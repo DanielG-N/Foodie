@@ -10,6 +10,7 @@ import 'package:minio/minio.dart';
 import 'package:minio/io.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_fadein/flutter_fadein.dart';
 
 class AddRecipePage extends StatefulWidget {
   const AddRecipePage({super.key});
@@ -442,7 +443,7 @@ class _AddRecipePage extends State<AddRecipePage>
   Widget build(BuildContext context) {
     return Form(
         key: formKey,
-        child: Container(
+        child: FadeIn(duration: Duration(milliseconds: 400), child: Container(
             width: MediaQuery.of(context).size.width * .9,
             height: MediaQuery.of(context).size.height * .85,
             decoration: BoxDecoration(
@@ -457,6 +458,6 @@ class _AddRecipePage extends State<AddRecipePage>
                   horizontal: 30,
                 ),
                 itemCount: formWidgets.length,
-                itemBuilder: ((context, index) => formWidgets[index]))));
+                itemBuilder: ((context, index) => formWidgets[index])))));
   }
 }

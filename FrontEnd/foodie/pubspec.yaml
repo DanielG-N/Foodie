@@ -41,6 +41,9 @@ dependencies:
   image_picker: ^0.8.6
   uuid: ^3.0.6
   minio: ^3.5.0
+  loading_animation_widget: ^1.2.0+3
+  confetti: ^0.7.0
+  flutter_fadein: ^2.0.0
 
 
 
@@ -76,6 +79,9 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
   - assets/images/blackLogo.png
+  - assets/images/logoWhite.png
+  - assets/images/loading.gif
+  - assets/images/sadPig.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
