@@ -95,71 +95,70 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
       RecipePage(),
       FadeIn(
           duration: Duration(milliseconds: 400),
-          child: Stack(alignment: Alignment.center,
-              //height: double.infinity,
-              //width: double.infinity,
-              children: [
-                Column(children: [
-                  TextField(
-                    controller: searchText,
-                    decoration: InputDecoration(
-                      suffixIcon: IconButton(
-                          icon: Icon(Icons.search),
-                          onPressed: () {
-                            getRecipes(searchText.text);
-                          }),
-                      suffixIconColor: Colors.white,
-                      filled: true,
-                      fillColor: Colors.white,
-                      //contentPadding: EdgeInsets.only(top: 50),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          borderSide: BorderSide.none),
-                      hintText: "Search recipes",
-                    ),
-                    onEditingComplete: () => getRecipes(searchText.text),
-                  ),
-                  Expanded(
-                      child: FractionallySizedBox(
-                    child: AppinioSwiper(
-                      controller: swipeController,
-                      unlimitedUnswipe: true,
-                      onSwipe: swipe,
-                      cards: recipes,
-                    ),
-                  ))
-                ]),
-                Center(
-                    //alignment: Alignment.center,
-                    child: SizeTransition(
-                  sizeFactor: _animationHeart!,
-                  child: const Icon(
-                    Icons.favorite,
-                    color: Colors.pink,
-                    size: 410,
-                    shadows: [
-                      Shadow(
-                          color: Colors.black54,
-                          blurRadius: 30,
-                          offset: Offset(0, 2))
-                    ],
-                  ),
-                )),
-                Align(
-                  alignment: Alignment.center,
-                  child: ConfettiWidget(
-                    numberOfParticles: 20,
-                    maxBlastForce: 50,
-                    gravity: .5,
-                    confettiController: _controllerCenter,
-                    blastDirectionality: BlastDirectionality.explosive,
-                    colors: const [
-                      Colors.pink,
-                    ],
-                  ),
+          child: Stack(alignment: Alignment.center, children: [
+            Column(children: [
+              TextField(
+                controller: searchText,
+                decoration: InputDecoration(
+                  suffixIcon: IconButton(
+                      icon: Icon(Icons.search),
+                      onPressed: () {
+                        getRecipes(searchText.text);
+                      }),
+                  suffixIconColor: Colors.white,
+                  filled: true,
+                  fillColor: Colors.white,
+                  //contentPadding: EdgeInsets.only(top: 50),
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: BorderSide.none),
+                  hintText: "Search recipes",
                 ),
-              ])),
-      const AddRecipePage()
+                onEditingComplete: () => getRecipes(searchText.text),
+              ),
+              Expanded(
+                  child: FractionallySizedBox(
+                child: AppinioSwiper(
+                  controller: swipeController,
+                  unlimitedUnswipe: true,
+                  onSwipe: swipe,
+                  cards: recipes,
+                ),
+              ))
+            ]),
+            Center(
+                //alignment: Alignment.center,
+                child: SizeTransition(
+              sizeFactor: _animationHeart!,
+              child: const Icon(
+                Icons.favorite,
+                color: Colors.pink,
+                size: 410,
+                shadows: [
+                  Shadow(
+                      color: Colors.black54,
+                      blurRadius: 30,
+                      offset: Offset(0, 2))
+                ],
+              ),
+            )),
+            Align(
+              alignment: Alignment.center,
+              child: ConfettiWidget(
+                numberOfParticles: 20,
+                maxBlastForce: 50,
+                gravity: .5,
+                confettiController: _controllerCenter,
+                blastDirectionality: BlastDirectionality.explosive,
+                colors: const [
+                  Colors.pink,
+                ],
+              ),
+            ),
+          ])),
+      AddRecipePage(
+        notifyParent: notifyParent,
+      )
     ]);
   }
 
@@ -302,8 +301,8 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
   Future<List<Recipe>?> getMyRecipes() async {
     final username = await storage.read(key: "username");
     print(username);
-    var response =
-        await http.get(Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"));
+    var response = await http
+        .get(Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"));
     print(response.body);
 
     if (response.body.isNotEmpty) {
@@ -328,29 +327,28 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: TabBar(
-        indicatorColor: Colors.lightBlue[400],
+        indicatorColor: Colors.white,
+        unselectedLabelColor: Colors.white,
+        labelColor: Colors.black,
         indicator: RectangularIndicator(
-          color: Colors.lightBlue[400]!,
-          bottomLeftRadius: 10,
-          bottomRightRadius: 10,
-          topLeftRadius: 10,
-          topRightRadius: 10
-        ),
+            color: Colors.white,
+            bottomLeftRadius: 10,
+            bottomRightRadius: 10,
+            topLeftRadius: 10,
+            topRightRadius: 10),
         controller: tabController,
         tabs: const [
           Text(
             "Saved Recipes",
-            style: TextStyle(color: Colors.white, fontFamily: "LobsterTwo", fontSize: 24),
+            style: TextStyle(fontFamily: "LobsterTwo", fontSize: 24),
           ),
           Text(
             "My Recipes",
-            style: TextStyle(color: Colors.white, fontFamily: "LobsterTwo", fontSize: 24),
+            style: TextStyle(fontFamily: "LobsterTwo", fontSize: 24),
           )
         ],
       ),
-      body: TabBarView(
-        controller: tabController,
-        children: [
+      body: TabBarView(controller: tabController, children: [
         // Saved recipes
         FutureBuilder(
           future: getSavedRecipes(),
@@ -394,9 +392,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                   const SizedBox(
                     height: 30,
                   ),
-
                   Image.asset("assets/images/sadPig.gif"),
-
                   const SizedBox(
                     height: 30,
                   ),
@@ -455,15 +451,12 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                   const SizedBox(
                     height: 60,
                   ),
-
                   Image.asset("assets/images/sadPig.gif"),
-
                   const SizedBox(
                     height: 60,
                   ),
-                  
                   const Text(
-                    "Add a recipe and it will be right here!",
+                    "Add a recipe and you can find it here!",
                     style: TextStyle(
                         color: Colors.white,
                         fontFamily: "LobsterTwo",
@@ -482,18 +475,18 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
     return Card(
       child: Column(children: [
         ClipRRect(
-                borderRadius: BorderRadius.circular(5),
-                child: FadeInImage(
-                  //fadeOutDuration: Duration(seconds: 1),
-                  //fadeInDuration: Duration(seconds: 1),
-                  width: MediaQuery.of(context).size.width,
-                  height: MediaQuery.of(context).size.height * .2,
-                  placeholder: randomLoading(),
-                  image: NetworkImage(recipe.image!),
-                  fit: BoxFit.fill,
-                  imageErrorBuilder: (context, error, stackTrace) =>
-                      Image.asset("assets/images/loading.gif"),
-                )),
+            borderRadius: BorderRadius.circular(5),
+            child: FadeInImage(
+              //fadeOutDuration: Duration(seconds: 1),
+              //fadeInDuration: Duration(seconds: 1),
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height * .2,
+              placeholder: randomLoading(),
+              image: NetworkImage(recipe.image!),
+              fit: BoxFit.fill,
+              imageErrorBuilder: (context, error, stackTrace) =>
+                  Image.asset("assets/images/loading.gif"),
+            )),
         // Container(
         //   height: MediaQuery.of(context).size.height * .2,
         //   width: MediaQuery.of(context).size.width,
@@ -554,10 +547,17 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
       "assets/images/loading3.gif",
       "assets/images/loading4.gif",
       "assets/images/loading5.gif"
-
     ];
 
     return AssetImage((loadingList..shuffle()).first);
+  }
+
+  void notifyParent() {
+    setState(() {
+      pages[0] = SavedRecipesPage();
+      _selectedIndex = 0;
+      tabController.index = 1;
+    });
   }
 
   bool error = false;

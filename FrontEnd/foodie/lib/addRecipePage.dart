@@ -13,7 +13,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_fadein/flutter_fadein.dart';
 
 class AddRecipePage extends StatefulWidget {
-  const AddRecipePage({super.key});
+  final Function notifyParent;
+  const AddRecipePage({super.key, required this.notifyParent});
 
   @override
   State<AddRecipePage> createState() => _AddRecipePage();
@@ -37,6 +38,9 @@ class _AddRecipePage extends State<AddRecipePage>
   Animation<double>? _animationAddInstruction;
   AnimationController? _controllerRemoveInstruction;
   Animation<double>? _animationRemoveInstruction;
+
+  AnimationController? _controllerCheck;
+  Animation<double>? _animationCheck;
 
   @override
   void initState() {
@@ -72,6 +76,15 @@ class _AddRecipePage extends State<AddRecipePage>
     _animationRemoveInstruction = CurvedAnimation(
       parent: _controllerRemoveInstruction!,
       curve: Curves.linear,
+    );
+
+    _controllerCheck = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    _animationCheck = CurvedAnimation(
+      parent: _controllerCheck!,
+      curve: Curves.easeOutCubic,
     );
 
     formWidgets.addAll([
@@ -299,16 +312,18 @@ class _AddRecipePage extends State<AddRecipePage>
             if (request.statusCode == 200) {
               Map<String, dynamic> data = jsonDecode(request.body);
               print(data);
-            }
 
-            final response = await http.put(
+              final response = await http.put(
                 Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"),
                 headers: <String, String>{'Content-Type': 'application/json'},
                 body: jsonEncode(recipe.url));
-            setState(() {
-              form.reset();
-              
-            });
+
+              await _controllerCheck!.forward();
+              await _controllerCheck!
+                  .animateBack(0, duration: const Duration(milliseconds: 1000));
+
+              widget.notifyParent();
+            }
           }
         },
         style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
@@ -451,21 +466,41 @@ class _AddRecipePage extends State<AddRecipePage>
         key: formKey,
         child: FadeIn(
             duration: Duration(milliseconds: 400),
-            child: Container(
-                width: MediaQuery.of(context).size.width * .9,
-                height: MediaQuery.of(context).size.height * .85,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+            child: Stack(alignment: Alignment.center, children: [
+              Container(
+                  width: MediaQuery.of(context).size.width * .9,
+                  height: MediaQuery.of(context).size.height * .85,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListView.separated(
+                      separatorBuilder: (context, index) => const SizedBox(
+                            height: 5,
+                          ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 30,
+                      ),
+                      itemCount: formWidgets.length,
+                      itemBuilder: ((context, index) => formWidgets[index]))),
+              Center(
+                  //alignment: Alignment.center,
+                  child: SizeTransition(
+                axis: Axis.horizontal,
+                axisAlignment: -1,
+                sizeFactor: _animationCheck!,
+                child: const Icon(
+                  Icons.check_circle_outline_rounded,
+                  color: Colors.green,
+                  size: 410,
+                  shadows: [
+                    Shadow(
+                        color: Colors.black54,
+                        blurRadius: 30,
+                        offset: Offset(0, 2))
+                  ],
                 ),
-                child: ListView.separated(
-                    separatorBuilder: (context, index) => const SizedBox(
-                          height: 5,
-                        ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                    ),
-                    itemCount: formWidgets.length,
-                    itemBuilder: ((context, index) => formWidgets[index])))));
+              )),
+            ])));
   }
 }
