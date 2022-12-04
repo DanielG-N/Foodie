@@ -119,6 +119,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
               Expanded(
                   child: FractionallySizedBox(
                 child: AppinioSwiper(
+                  padding: EdgeInsets.symmetric(horizontal: 5, vertical: 10),
                   controller: swipeController,
                   unlimitedUnswipe: true,
                   onSwipe: swipe,
@@ -1023,6 +1024,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
         return;
       }
     }
+    imageCache.clear();
     recipeUrls.removeLast();
   }
 
@@ -1097,6 +1099,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
             ClipRRect(
                 borderRadius: BorderRadius.circular(20),
                 child: FadeInImage(
+                  key: UniqueKey(),
                   //fadeOutDuration: Duration(seconds: 1),
                   //fadeInDuration: Duration(seconds: 1),
                   width: MediaQuery.of(context).size.width,
@@ -1126,7 +1129,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                 child: AutoSizeText(
                   recipe?.title ?? "No title",
                   style: const TextStyle(
-                      fontSize: 25,
+                      fontSize: 28,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'LobsterTwo'),
                   maxLines: 1,
@@ -1140,33 +1143,36 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                   Icon(
                     Icons.face,
                     color: Colors.blue[300],
+                    size: 30
                   ),
-                  Text(
+                  AutoSizeText(
                     "By: ${recipe?.author ?? 'N/A'}",
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                 ]),
                 Column(children: [
                   Icon(
                     Icons.timer,
-                    color: Colors.red[700],
+                    color: Colors.red[600],
+                    size: 30
                   ),
                   Text(
                     "Prep time: ${recipe?.time.toString() ?? 'N/A'}",
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600,fontSize: 16),
                   ),
                 ]),
                 Column(children: [
                   Icon(
                     Icons.restaurant,
-                    color: Colors.green[800],
+                    color: Colors.green[700],
+                    size: 30,
                   ),
                   Text(
                     recipe?.yeild ?? 'N/A',
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600),
+                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                 ])
               ],

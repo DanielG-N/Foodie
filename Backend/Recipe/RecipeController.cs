@@ -33,7 +33,7 @@ public class RecipeController : ControllerBase
     [HttpGet("random")]
     public async Task<ActionResult<List<Recipe>>> GetRandomRecipes()
     {
-        return await _recipeDB.AsQueryable().Sample(100).ToListAsync();
+        return await _recipeDB.AsQueryable().Sample(200).ToListAsync();
     }
 
     [HttpPut]
