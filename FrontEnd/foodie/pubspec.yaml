@@ -45,6 +45,7 @@ dependencies:
   confetti: ^0.7.0
   flutter_fadein: ^2.0.0
   tab_indicator_styler: ^2.0.0
+  holding_gesture: ^1.1.0
 
 
 
@@ -86,7 +87,8 @@ flutter:
   - assets/images/loading3.gif
   - assets/images/loading4.gif
   - assets/images/loading5.gif
-  - assets/images/sadPig.gif
+  - assets/images/fridge.gif
+  - assets/images/book.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

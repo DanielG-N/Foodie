@@ -37,6 +37,26 @@ public class UserRecipesController : ControllerBase
         return Results.NoContent();
     }
 
+    [HttpPut("remove/{username}")]
+    public async Task<IResult> RemoveRecipe([FromBody] string url, [FromRoute]string username)
+    {
+        var update = Builders<UserRecipes>.Update
+            .Pull(u => u.SavedRecipes, url);
+
+        await _userRecipesDB.UpdateOneAsync(u => u.Username == username, update, new UpdateOptions{IsUpsert = true}, default);
+        return Results.NoContent();
+    }
+
+    [HttpPut("remove/my/{username}")]
+    public async Task<IResult> RemoveMyRecipe([FromBody] string url, [FromRoute]string username)
+    {
+        var update = Builders<UserRecipes>.Update
+            .Pull(u => u.MyRecipes, url);
+
+        await _userRecipesDB.UpdateOneAsync(u => u.Username == username, update, new UpdateOptions{IsUpsert = true}, default);
+        return Results.NoContent();
+    }
+
     [HttpGet("{username}")]
     public async Task<ActionResult<List<string>>> GetSavedRecipes(string username){
         UserRecipes savedRecipes = await _userRecipesDB.Find(ur => ur.Username == username).FirstOrDefaultAsync();

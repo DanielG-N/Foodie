@@ -13,6 +13,10 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:confetti/confetti.dart';
 import 'package:flutter_fadein/flutter_fadein.dart';
 import 'package:tab_indicator_styler/tab_indicator_styler.dart';
+import 'package:holding_gesture/holding_gesture.dart';
+import 'package:minio/minio.dart';
+import 'package:minio/io.dart';
+import 'package:foodie/s3access.dart';
 
 void main() {
   runApp(const MyApp());
@@ -170,7 +174,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
         headers: <String, String>{
           'Authorization': 'Bearer $token',
         });
-    print(response.statusCode);
+    //print(response.statusCode);
     if (response.statusCode == 401) {
       return false;
     } else {
@@ -357,7 +361,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
             if (snapshot.connectionState != ConnectionState.done) {
               return Container();
             }
-            if (snapshot.hasData) {
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
               return FadeIn(
                   duration: Duration(milliseconds: 400),
                   child: Container(
@@ -379,33 +383,41 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                     ],
                   )));
             } else {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Oh no!\nIt looks you dont have any saved recipes.",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "LobsterTwo",
-                        fontSize: 24),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  Image.asset("assets/images/sadPig.gif"),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  const Text(
-                    "Swipe right on a recipe to save it.",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "LobsterTwo",
-                        fontSize: 24),
-                  ),
-                ],
-              );
+              return FadeIn(
+                  duration: Duration(milliseconds: 400),
+                  child: Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "Oh no!\nIt looks you dont have any saved recipes.",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontFamily: "LobsterTwo",
+                                fontSize: 26),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.asset("assets/images/fridge.gif")),
+                          const SizedBox(
+                            height: 30,
+                          ),
+                          const Text(
+                            "Swipe right on a recipe to save it.",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontFamily: "LobsterTwo",
+                                fontSize: 26),
+                          ),
+                        ],
+                      )));
             }
           },
         ),
@@ -416,7 +428,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
             if (snapshot.connectionState != ConnectionState.done) {
               return Container();
             }
-            if (snapshot.hasData) {
+            if (snapshot.hasData && snapshot.data!.isNotEmpty) {
               return FadeIn(
                   duration: Duration(milliseconds: 400),
                   child: Container(
@@ -438,33 +450,43 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                     ],
                   )));
             } else {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "You haven't made any Recipes!",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "LobsterTwo",
-                        fontSize: 24),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(
-                    height: 60,
-                  ),
-                  Image.asset("assets/images/sadPig.gif"),
-                  const SizedBox(
-                    height: 60,
-                  ),
-                  const Text(
-                    "Add a recipe and you can find it here!",
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontFamily: "LobsterTwo",
-                        fontSize: 24),
-                  ),
-                ],
-              );
+              return FadeIn(
+                  duration: Duration(milliseconds: 400),
+                  child: Container(
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: Colors.white),
+                      width: 200,
+                      height: MediaQuery.of(context).size.height * .2,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text(
+                            "You haven't made any recipes!",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontFamily: "LobsterTwo",
+                                fontSize: 30),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(
+                            height: 40,
+                          ),
+                          ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.asset("assets/images/book.gif")),
+                          const SizedBox(
+                            height: 40,
+                          ),
+                          const Text(
+                            "Add a recipe and you'll see it here.",
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontFamily: "LobsterTwo",
+                                fontSize: 30),
+                          ),
+                        ],
+                      )));
             }
           },
         ),
@@ -488,16 +510,6 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
               imageErrorBuilder: (context, error, stackTrace) =>
                   Image.asset("assets/images/loading.gif"),
             )),
-        // Container(
-        //   height: MediaQuery.of(context).size.height * .2,
-        //   width: MediaQuery.of(context).size.width,
-        //   alignment: Alignment.center,
-        //   decoration: BoxDecoration(
-        //     borderRadius: BorderRadius.circular(5),
-        //     image: DecorationImage(
-        //         image: NetworkImage(recipe.image!), fit: BoxFit.cover),
-        //   ),
-        // ),
         Container(
             margin: const EdgeInsets.only(top: 4),
             alignment: Alignment.center,
@@ -514,16 +526,128 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
     );
   }
 
-  OpenContainer createSavedRecipesCard(Recipe recipe) {
-    return OpenContainer(
-      closedBuilder: (context, closedContainer) {
-        return createSavedRecipeClosedCard(recipe);
-      },
-      openBuilder: (context, openContainer) {
-        return createRecipeCard(recipe);
-      },
-      closedColor: randomColor(),
-    );
+  Widget createSavedRecipesCard(Recipe recipe) {
+    return HoldDetector(
+        onHold: () {
+          deleteRecipeDialog(recipe);
+        },
+        child: OpenContainer(
+          closedBuilder: (context, closedContainer) {
+            return createSavedRecipeClosedCard(recipe);
+          },
+          openBuilder: (context, openContainer) {
+            return createRecipeCard(recipe);
+          },
+          closedColor: randomColor(),
+        ));
+  }
+
+  void deleteRecipeDialog(Recipe recipe) {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              contentPadding:
+                  EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+              actionsAlignment: MainAxisAlignment.center,
+              alignment: Alignment.center,
+              title: const Text(
+                'Delete this recipe?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontFamily: "LobsterTwo", fontSize: 24),
+              ),
+              content: Text(
+                recipe.title!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontFamily: "IndieFlower", fontWeight: FontWeight.w600),
+              ),
+              actions: [
+                TextButton(
+                  //color: Colors.black,
+                  onPressed: () async {
+                    tabController.index == 0
+                        ? await removeSavedRecipe(recipe)
+                        : await deleteMyRecipe(recipe);
+
+                    setState(() {
+                      pages[0] = RecipePage();
+                    });
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.red),
+                        borderRadius: BorderRadius.circular(5)),
+                  ),
+                  child: const Text(
+                    'Yes',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                TextButton(
+                  //color: Colors.black,
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    shape: RoundedRectangleBorder(
+                        side: BorderSide(color: Colors.blue),
+                        borderRadius: BorderRadius.circular(5)),
+                  ),
+                  child: const Text(
+                    'No',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ));
+  }
+
+  Future<void> removeSavedRecipe(Recipe recipe) async {
+    String? username = await storage.read(key: 'username');
+    final response = await http.put(
+        Uri.parse("http://10.0.2.2:8888/userrecipes/remove/$username"),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(recipe.url));
+
+    print(response.statusCode);
+    if (response.statusCode == 200) {}
+  }
+
+  Future<void> deleteMyRecipe(Recipe recipe) async {
+    String? username = await storage.read(key: 'username');
+    String? url = recipe.url;
+
+    var response = await http.put(
+        Uri.parse("http://10.0.2.2:8888/userrecipes/remove/my/$username"),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(url));
+
+    if (response.statusCode == 200) {
+      response = await http.delete(
+        Uri.parse("http://10.0.2.2:8888/recipe/"),
+        headers: <String, String>{'Content-Type': 'application/json'},
+        body: jsonEncode(url),
+      );
+
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        var minio = Minio(
+            endPoint: "s3.amazonaws.com",
+            accessKey: getAccessKey(),
+            secretKey: getsecretKey(),
+            region: "us-west-2");
+
+        var path = recipe.image!.split('com/')[1];
+        print(path);
+
+        await minio.removeObject("fooodie", path);
+      }
+    }
   }
 
   Color randomColor() {
@@ -987,7 +1111,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
         _controllerCenter.play();
         await _controllerHeart!.forward();
         _controllerHeart!.animateBack(0, duration: Duration(milliseconds: 500));
-        //_controllerHeart!.reverse();
+
         pages[0] = SavedRecipesPage();
       } else {
         swipeController.unswipe();
@@ -1024,7 +1148,6 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
         return;
       }
     }
-    imageCache.clear();
     recipeUrls.removeLast();
   }
 
@@ -1140,27 +1263,23 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 Column(children: [
-                  Icon(
-                    Icons.face,
-                    color: Colors.blue[300],
-                    size: 30
-                  ),
+                  Icon(Icons.face, color: Colors.blue[300], size: 30),
                   AutoSizeText(
                     "By: ${recipe?.author ?? 'N/A'}",
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600, fontSize: 16),
+                        fontFamily: 'IndieFlower',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16),
                   ),
                 ]),
                 Column(children: [
-                  Icon(
-                    Icons.timer,
-                    color: Colors.red[600],
-                    size: 30
-                  ),
+                  Icon(Icons.timer, color: Colors.red[600], size: 30),
                   Text(
                     "Prep time: ${recipe?.time.toString() ?? 'N/A'}",
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600,fontSize: 16),
+                        fontFamily: 'IndieFlower',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16),
                   ),
                 ]),
                 Column(children: [
@@ -1172,7 +1291,9 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                   Text(
                     recipe?.yeild ?? 'N/A',
                     style: const TextStyle(
-                        fontFamily: 'IndieFlower', fontWeight: FontWeight.w600, fontSize: 16),
+                        fontFamily: 'IndieFlower',
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16),
                   ),
                 ])
               ],

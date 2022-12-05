@@ -43,25 +43,11 @@ public class RecipeController : ControllerBase
         return Results.Created($"/{recipe.Id}", recipe);
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IResult> DeleteRecipe(string id)
+    [HttpDelete]
+    public async Task<IResult> DeleteRecipe([FromBody] string url)
     {
-        var recipe = await _recipeDB.FindOneAndDeleteAsync(r => r.Id == id);
+        var recipe = await _recipeDB.FindOneAndDeleteAsync(r => r.Url == url);
 
         return Results.Ok(recipe);
-    }
-
-    [HttpGet("{searchTerm}")]
-    public async Task<ActionResult<Recipe>> GetRecipes(string searchTerm)
-    {
-        //var client = new HttpClient(_handler, false);
-        var client = new HttpClient();
-        var recipes = await client.GetAsync($"http://scraper:5000/chicken");
-        //return response;
-
-        if(recipes == null)
-            return NotFound();
-
-        return Ok(recipes);
     }
 }

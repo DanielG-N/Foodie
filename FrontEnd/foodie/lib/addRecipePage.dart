@@ -314,9 +314,9 @@ class _AddRecipePage extends State<AddRecipePage>
               print(data);
 
               final response = await http.put(
-                Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"),
-                headers: <String, String>{'Content-Type': 'application/json'},
-                body: jsonEncode(recipe.url));
+                  Uri.parse("http://10.0.2.2:8888/userrecipes/my/$username"),
+                  headers: <String, String>{'Content-Type': 'application/json'},
+                  body: jsonEncode(recipe.url));
 
               await _controllerCheck!.forward();
               await _controllerCheck!
@@ -335,16 +335,7 @@ class _AddRecipePage extends State<AddRecipePage>
     ]);
   }
 
-  _AddRecipePage() {
-    // _controller = AnimationController(
-    //   duration: const Duration(seconds: 1),
-    //   vsync: this,
-    // );
-    // _animation = CurvedAnimation(
-    //   parent: _controller,
-    //   curve: Curves.fastLinearToSlowEaseIn,
-    // );
-  }
+  _AddRecipePage();
 
   Future<String> uploadImage() async {
     var minio = Minio(
