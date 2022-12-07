@@ -265,7 +265,7 @@ class _AddRecipePage extends State<AddRecipePage>
                               toggleButtonsInstruction();
                             }
                             formWidgets.insert(instructionsIndex,
-                                customIngredientTextFormField());
+                                customInstructionTextFormField());
                             instructionsIndex++;
                           });
                         },

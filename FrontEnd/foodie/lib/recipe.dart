@@ -28,6 +28,17 @@ class Recipe {
     image = json['image'];
   }
 
+    Recipe.fromJsonSearch(Map<String, dynamic> json) {
+    url = json['Url'];
+    title = json['Title'];
+    author = json['Author'];
+    time = json['Time'];
+    yeild = json['Yeild'];
+    ingredients = json['Ingredients'].cast<String>();
+    instructions = json['Instructions'].cast<String>();
+    image = json['Image'];
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['Url'] = this.url;

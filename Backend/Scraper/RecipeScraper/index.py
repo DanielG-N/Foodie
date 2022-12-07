@@ -26,7 +26,7 @@ eureka_client.init(eureka_server="http://eureka:8761/eureka/",
                 instance_port=your_rest_server_port)
 
 app = Flask(__name__)
-searchTerm = ''
+searchTerm = ""
 
 client = MongoClient('mongodb+srv://MuteCoot:bgO0h2zvGhhsr7PH@foodie.oszd0t8.mongodb.net/?retryWrites=true&w=majority')
 db = client['Foodie']
@@ -38,9 +38,10 @@ def hello_world():
 
 @app.route("/<search>")
 def startScrape(search):
-
-    searchTerm = search
-    urls = getUrls(searchTerm)
+    #global searchTerm
+    #searchTerm = search.replace(" ","-")
+    search = search.replace(" ", "%20")
+    urls = getUrls(search)
 
     def generate():
         with Pool(processes=cpu_count()*2) as pool:
@@ -77,6 +78,7 @@ def GetSites(url):
     soup = BeautifulSoup(page, 'html.parser')
 
     for search in set(soup.select(f'a[href*="{searchTerm}"]')):
+        # print(searchTerm)
         recipe = search.get('href')
 
         if recipe.startswith('/'):
@@ -106,12 +108,12 @@ def ScrapeSite(url):
     except:
         return
 
-def getUrls(searchTerm):
-    urls = [f'https://www.allrecipes.com/search?q={searchTerm}',
-    f'https://www.mybakingaddiction.com/?s={searchTerm}',
-    f'https://sallysbakingaddiction.com/?s={searchTerm}',
-    f'https://tastesbetterfromscratch.com/?s={searchTerm}',
-    f'https://www.foodnetwork.com/search/{searchTerm}',
-    f'https://www.bonappetit.com/search?q={searchTerm}']
+def getUrls(search):
+    urls = [f'https://www.allrecipes.com/search?q={search}',
+    f'https://www.mybakingaddiction.com/?s={search}',
+    f'https://sallysbakingaddiction.com/?s={search}',
+    f'https://tastesbetterfromscratch.com/?s={search}',
+    f'https://www.foodnetwork.com/search/{search}',
+    f'https://www.bonappetit.com/search?q={search}']
 
     return urls

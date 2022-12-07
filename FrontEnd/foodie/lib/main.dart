@@ -79,6 +79,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
   }
 
   void init() async {
+    //storage.deleteAll();
     isAuthenticated = await checkAuth();
 
     tabController = TabController(length: 2, vsync: this);
@@ -827,6 +828,8 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                         if (request.statusCode == 200) {
                           Map<String, dynamic> data = jsonDecode(request.body);
 
+                          print(data);
+
                           await storage.write(key: "jwt", value: data['token']);
                           await storage.write(
                               key: "username", value: data['username']);
@@ -1157,19 +1160,53 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
     print(response.body);
     List<dynamic> recipeList = jsonDecode(response.body);
 
-    setState(() {
-      recipeList.forEach((recipe) {
-        recipe = Recipe.fromJson(recipe);
-        recipes.add(createRecipeCard(recipe));
-        recipeUrls.add(recipe.url);
+    if (recipes.length >= 2) {
+      recipes.removeRange(0, recipes.length - 1);
+      recipeUrls.removeRange(0, recipeUrls.length - 1);
+    }
+
+    recipeList.forEach((recipe) {
+      recipe = Recipe.fromJson(recipe);
+      setState(() {
+        recipes.insert(0, createRecipeCard(recipe));
+        recipeUrls.insert(0, recipe.url);
       });
     });
   }
 
   void getRecipes(String searchTerm) async {
+    bool dbHasRecipe = false;
     FocusManager.instance.primaryFocus?.unfocus();
     if (searchResponse != null && !searchResponse!.isPaused) {
       searchResponse!.cancel();
+    }
+
+    //searchTerm.replaceAll(" ", "%20");
+    if (searchTerm.isEmpty) {
+      fetchRecipes();
+      return;
+    } else {
+      var dbResponse = await http
+          .get(Uri.parse("http://10.0.2.2:8888/recipe/search/$searchTerm"));
+
+      List<dynamic> recipeList = jsonDecode(dbResponse.body);
+
+      if (dbResponse.body.isNotEmpty) {
+        dbHasRecipe = true;
+
+        if (recipes.length >= 2) {
+          recipes.removeRange(0, recipes.length - 1);
+          recipeUrls.removeRange(0, recipeUrls.length - 1);
+        }
+
+        recipeList.forEach((recipe) {
+          recipe = Recipe.fromJson(recipe);
+          setState(() {
+            recipes.insert(0, createRecipeCard(recipe));
+            recipeUrls.insert(0, recipe.url);
+          });
+        });
+      }
     }
 
     var request = http.Request(
@@ -1183,9 +1220,9 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
       print(
           "Received streamedResponse.statusCode:${streamedResponse.statusCode}");
 
-      if (recipes.length >= 3) {
-        //recipes.removeRange(0, recipes.length - 2);
-        recipes.clear();
+      if (!dbHasRecipe && recipes.length >= 2) {
+        recipes.removeRange(0, recipes.length - 1);
+        recipeUrls.removeRange(0, recipeUrls.length - 1);
       }
 
       String jsonString = '';
@@ -1195,7 +1232,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
           print(jsonString);
 
           if (jsonString.endsWith('}')) {
-            Recipe recipe = Recipe.fromJson(jsonDecode(jsonString));
+            Recipe recipe = Recipe.fromJsonSearch(jsonDecode(jsonString));
             recipes.insert(0, createRecipeCard(recipe));
             recipeUrls.insert(0, recipe.url!);
 
@@ -1275,7 +1312,7 @@ class _HomeWidget extends State<HomeWidget> with TickerProviderStateMixin {
                 Column(children: [
                   Icon(Icons.timer, color: Colors.red[600], size: 30),
                   Text(
-                    "Prep time: ${recipe?.time.toString() ?? 'N/A'}",
+                    "Prep time: ${recipe.time != null ? "${recipe.time.toString()} minutes" : '???'}",
                     style: const TextStyle(
                         fontFamily: 'IndieFlower',
                         fontWeight: FontWeight.w600,

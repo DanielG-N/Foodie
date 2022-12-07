@@ -30,6 +30,12 @@ public class RecipeController : ControllerBase
         return await _recipeDB.Find(Builders<Recipe>.Filter.In(r => r.Url, urls)).ToListAsync();
     }
 
+    [HttpGet("search/{searchTerm}")]
+    public async Task<ActionResult<List<Recipe>>> SearchRecipes(string searchTerm)
+    {
+        return await _recipeDB.Find(r => r.Title.ToLower().Contains(searchTerm.ToLower())).ToListAsync();
+    }
+
     [HttpGet("random")]
     public async Task<ActionResult<List<Recipe>>> GetRandomRecipes()
     {
